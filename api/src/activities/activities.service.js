@@ -98,11 +98,13 @@ const lastPlayed = sql`greatest(${activities.playedAt}, case when ${activities.r
  *   enjoyment: Enjoyment,
  *   random?: () => number,
  *   now?: () => Date,
+ *   usage?: import('../usage/usage.service.js').UsageService | null,
  * }} deps `random` is the only source of chance, `now` the clock the
  *   freshness is measured against; tests pin both. `weather` answers null for
  *   a family that hasn't said where they live, and whenever it can't be read.
  *   `enjoyment` has no ratings without Jev, or whenever it can't be read, and
- *   records each call it made (JUG-200).
+ *   records each call it made (JUG-200). `usage` counts the juegos shown and
+ *   played (JUG-198); absent, nothing is counted.
  */
 export function createActivitiesService({
   db,
@@ -114,6 +116,7 @@ export function createActivitiesService({
   enjoyment,
   random = Math.random,
   now = () => new Date(),
+  usage = null,
 }) {
   return {
     /**
@@ -232,6 +235,7 @@ export function createActivitiesService({
         })
         .returning({ id: activities.id })
       if (jevRead) await enjoyment.record({ familyId, activityId: id, read: jevRead })
+      await usage?.record('juego_shown', { familyId, userId })
       return { id, ...activity, reaction: null, closest }
     },
 
@@ -288,14 +292,17 @@ export function createActivitiesService({
      * they played is kept.
      * @param {string} familyId
      * @param {string} id
+     * @param {{ userId?: string | null }} [options] the adult who tapped it, for the count (JUG-198)
      */
-    async play(familyId, id) {
+    async play(familyId, id, { userId = null } = {}) {
       const [row] = await db
         .update(activities)
         .set({ playedAt: now() })
         .where(and(eq(activities.id, id), eq(activities.familyId, familyId)))
         .returning({ id: activities.id })
       if (!row) throw new NotFoundError('No such activity')
+      // Every tap counts, so a juego played again is two.
+      await usage?.record('juego_played', { familyId, userId })
     },
 
     /**

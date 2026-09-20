@@ -105,11 +105,16 @@ export function withKids(profile, kidIds) {
 }
 
 /**
- * @param {{ db: Db, geocoder?: Geocoder | null }} deps `geocoder` puts the
- *   family's words for where they live on the map (JUG-25); without one the
- *   words are still saved and the weather is simply never read for them.
+ * @param {{
+ *   db: Db,
+ *   geocoder?: Geocoder | null,
+ *   usage?: import('../usage/usage.service.js').UsageService | null,
+ * }} deps `geocoder` puts the family's words for where they live on the map
+ *   (JUG-25); without one the words are still saved and the weather is simply
+ *   never read for them. `usage` counts the families onboarded (JUG-198);
+ *   absent, nothing is counted.
  */
-export function createFamiliesService({ db, geocoder = null }) {
+export function createFamiliesService({ db, geocoder = null, usage = null }) {
   /**
    * @param {string} familyId
    * @param {string | null} [userId] the adult asking, whose kids sitting out come back not playing
@@ -270,12 +275,18 @@ export function createFamiliesService({ db, geocoder = null }) {
       // Before the transaction: a geocoder that takes its time must not hold
       // the family's rows locked while it does.
       const located = input.location === undefined ? null : await locatedFor(userId, input.location)
+      // Whether this save is what started the family, which is the moment
+      // onboarding is finished (JUG-198). Counted after the transaction
+      // commits, so a family that never saved is never counted.
+      let started = false
       const familyId = await db.transaction(async (tx) => {
         // Two first saves at once must not start two families.
         await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${userId}))`)
         let familyId = await familyIdOf(tx, userId)
-        if (!familyId) familyId = (await insertFamily(tx, userId, input.name ?? null)).id
-        else if (input.name !== undefined) await tx.update(families).set({ name: input.name }).where(eq(families.id, familyId))
+        if (!familyId) {
+          familyId = (await insertFamily(tx, userId, input.name ?? null)).id
+          started = true
+        } else if (input.name !== undefined) await tx.update(families).set({ name: input.name }).where(eq(families.id, familyId))
         if (input.home !== undefined) await tx.update(families).set({ home: input.home }).where(eq(families.id, familyId))
         if (located) await tx.update(families).set(located).where(eq(families.id, familyId))
 
@@ -318,6 +329,7 @@ export function createFamiliesService({ db, geocoder = null }) {
         if (input.toys) await syncRows(tx, toys, familyId, input.toys, nameOnly)
         return familyId
       })
+      if (started) await usage?.record('family_created', { familyId, userId })
       return profileOf(familyId, userId)
     },
   }
