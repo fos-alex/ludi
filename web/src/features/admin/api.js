@@ -12,6 +12,7 @@ import { request } from '../../shared/http'
 /** @typedef {import('./types').AdminAccount} AdminAccount */
 /** @typedef {import('./types').Invitation} Invitation */
 /** @typedef {import('./types').SentInvitation} SentInvitation */
+/** @typedef {import('./types').Usage} Usage */
 
 const TEMPLATES = '/admin/activity-templates'
 
@@ -78,4 +79,14 @@ export function invite(email) {
  */
 export async function deleteAccount(id) {
   await request('DELETE', `/admin/users/${id}`)
+}
+
+/**
+ * What families have done with Ludi (JUG-199): the totals, the last week, and
+ * a count per day for the last three months. Counted by the API itself, so
+ * nothing here is measured in the browser.
+ * @returns {Promise<Usage>}
+ */
+export function listUsage() {
+  return request('GET', '/admin/usage')
 }
