@@ -65,6 +65,11 @@ services:
       STORY_SERIES_EPISODES: ${STORY_SERIES_EPISODES:-}
       ADMIN_ENABLED: ${ADMIN_ENABLED:-false}
       AUDIT_TRANSCRIPTS: ${AUDIT_TRANSCRIPTS:-false}
+      # Where the usage events also go (JUG-198). Without both, they stay in
+      # usage_events and nothing reaches Google.
+      ANALYTICS_MEASUREMENT_ID: ${ANALYTICS_MEASUREMENT_ID:-}
+      ANALYTICS_API_SECRET: ${ANALYTICS_API_SECRET:-}
+      ANALYTICS_DEBUG: ${ANALYTICS_DEBUG:-false}
       # Speech to text for voice notes: the stt service below, unless .env
       # points at a hosted one with its model and key.
       STT_URL: ${STT_URL:-http://stt:8000/v1}

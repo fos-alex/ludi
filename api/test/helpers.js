@@ -35,10 +35,11 @@ export const ORIGIN = 'http://localhost:3000'
  *   email?: Partial<Config['email']>,
  *   admin?: Partial<Config['admin']>,
  *   audit?: Partial<Config['audit']>,
+ *   analytics?: Config['analytics'],
  * }} [overrides]
  * @returns {Config}
  */
-export function testConfig({ auth, llm, stories, stt, weather, places, email, admin, audit, ...rest } = {}) {
+export function testConfig({ auth, llm, stories, stt, weather, places, email, admin, audit, analytics = null, ...rest } = {}) {
   return {
     port: 0,
     databaseUrl: '',
@@ -56,6 +57,9 @@ export function testConfig({ auth, llm, stories, stt, weather, places, email, ad
     email: { host: null, port: DEFAULT_SMTP_PORT, user: null, password: null, from: '', ...email },
     admin: { enabled: false, ...admin },
     audit: { transcripts: false, ...audit },
+    // No GA4 data stream: the usage events stay in usage_events, and nothing
+    // in the tests reaches Google.
+    analytics,
     ...rest,
   }
 }

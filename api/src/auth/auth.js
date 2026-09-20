@@ -9,8 +9,15 @@ import { accounts, sessions, users, verifications } from './auth.schema.js'
 
 const DAY_SECONDS = 60 * 60 * 24
 
-/** @param {{ config: AuthConfig, db: import('../db/client.js').Db, invitations: InvitationsService }} deps */
-export function createAuth({ config, db, invitations }) {
+/**
+ * @param {{
+ *   config: AuthConfig,
+ *   db: import('../db/client.js').Db,
+ *   invitations: InvitationsService,
+ *   usage?: import('../usage/usage.service.js').UsageService | null,
+ * }} deps `usage` counts the accounts created (JUG-198); absent, nothing is counted.
+ */
+export function createAuth({ config, db, invitations, usage = null }) {
   return betterAuth({
     baseURL: config.url,
     // The phone reaches the stack through Tailscale, at another origin than BETTER_AUTH_URL.
@@ -51,7 +58,12 @@ export function createAuth({ config, db, invitations }) {
             }
             throw new APIError('FORBIDDEN', { code: 'SIGNUP_NOT_ALLOWED', message: 'Sign-up is by invitation only' })
           },
-          after: async (user) => invitations.accept(user.email),
+          after: async (user) => {
+            await invitations.accept(user.email)
+            // Signing up, not finishing onboarding: the family comes later,
+            // and the gap between the two is the drop-off (JUG-198).
+            await usage?.record('account_created', { userId: user.id })
+          },
         },
       },
     },
