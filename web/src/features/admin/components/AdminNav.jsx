@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 
-/** The admin's two pages. The router marks the one open with `aria-current`. */
+/** The admin's three pages. The router marks the one open with `aria-current`. */
 export function AdminNav() {
   return (
     <nav className="admin-nav" aria-label="Admin">
@@ -9,6 +9,9 @@ export function AdminNav() {
       </Link>
       <Link to="/admin/usuarios" className="admin-nav__link">
         Usuarios
+      </Link>
+      <Link to="/admin/uso" className="admin-nav__link">
+        Uso
       </Link>
     </nav>
   )
