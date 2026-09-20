@@ -12,13 +12,17 @@ export function createActivitiesController({ activities }) {
       // `mood` left out is not the same as null: without it the clock decides.
       const {
         after = null,
+        reuseMaterials = false,
         mood,
         place = null,
         sound = null,
         category = null,
-      } = /** @type {{ after?: string | null, mood?: 'calm' | 'lively' | null } & Partial<Choices>} */ (request.body ?? {})
+      } = /** @type {{ after?: string | null, reuseMaterials?: boolean, mood?: 'calm' | 'lively' | null } & Partial<Choices>} */ (
+        request.body ?? {}
+      )
       const activity = await activities.suggest(familyOf(request), {
         after,
+        reuseMaterials,
         mood,
         choices: { place, sound, category },
         userId: userOf(request).id,

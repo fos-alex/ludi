@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { AppMenu } from '../../../app/AppMenu'
-import { ChoiceChip, ChoiceSheet, placeText, ReactionRow, suggestActivity, WeatherNote } from '../../activities'
+import { ChoiceChip, ChoiceSheet, placeText, ReactionRow, SameMaterials, suggestActivity, WeatherNote } from '../../activities'
 import { choosePlaying, familyLine, loadFamily, markPlaying, WhoPlays } from '../../family'
 import { forgetOptions, LastStoryCard, storyOptions } from '../../stories'
 import { useDocumentTitle } from '../../../shared/hooks/useDocumentTitle'
@@ -39,7 +39,9 @@ const SLOW_AFTER_MS = 6000
  * with them already on screen (JUG-140). The last story read sits under the
  * juego, with the way to make it a series (JUG-154). Inside the last juego's
  * card, the feedback tap asks once how it went (JUG-23): it is there while the
- * juego has no reaction, stays through the tap, and isn't asked again. Above
+ * juego has no reaction, stays through the tap, and isn't asked again. Under
+ * that card, Con lo mismo offers the juego to play next with the materials it
+ * needed (JUG-196). Above
  * the button, *¿Algo en especial?* opens the sheet where the parent chooses
  * what the juego should be (JUG-31); before bed it says the next juego will
  * be tranqui (JUG-26). In the top corner, the weather the juego is picked
@@ -56,6 +58,8 @@ export function HomeScreen() {
   const timer = useStored('timer')
   // The juego being played takes the last juego's place: Home shows one card, never two.
   const running = timer ? activities?.[timer.activityId] : null
+  // The juego whose materials are out, which Con lo mismo offers a second one for (JUG-196).
+  const onTheFloor = running ?? last
   const stories = useStored('stories')
   const lastStoryId = useStored('lastStoryId')
   const lastStory = stories?.[lastStoryId ?? '']
@@ -169,6 +173,7 @@ export function HomeScreen() {
               </div>
             )
           )}
+          {onTheFloor && <SameMaterials activity={onTheFloor} />}
           <LastStoryCard />
         </div>
       )}

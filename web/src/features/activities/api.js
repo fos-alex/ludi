@@ -21,20 +21,20 @@ export class NothingFitsError extends WordedError {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
- * The next juego, for what the parent chose it to be (JUG-31) and the moment
- * the family is in (JUG-26). Every way of asking goes through here, so Otro
- * juego carries the same choices as the tap on Home. `closest` says no juego
- * matched all of them, and this one comes nearest; it is for the screen that
- * asked, and isn't kept with the juego.
- * @param {{ after?: string | null }} [options] the activity to move on from
+ * Asks the API for a juego and keeps it, without saying it is the last one.
+ * Every way of asking goes through here, so each carries the same choices
+ * (JUG-31) and the same moment (JUG-26).
+ * @param {{ after?: string | null, reuseMaterials?: boolean }} body the activity to move on
+ *   from, and whether the next one has to be playable with its materials (JUG-196)
  * @returns {Promise<Activity & { closest: boolean }>}
  */
-export async function suggestActivity({ after = null } = {}) {
+async function ask({ after = null, reuseMaterials = false }) {
   let answer
   try {
     // Ids cached before activities came from the API aren't the API's.
     answer = await request('POST', '/activities/suggestions', {
       after: after && UUID.test(after) ? after : null,
+      reuseMaterials,
       ...activityChoices(),
     })
   } catch (error) {
@@ -43,8 +43,52 @@ export async function suggestActivity({ after = null } = {}) {
   }
   const { closest, ...activity } = answer
   write('activities', { ...read('activities'), [activity.id]: activity })
-  write('lastActivityId', activity.id)
   return { ...activity, closest }
+}
+
+/**
+ * The next juego, for what the parent chose it to be (JUG-31) and the moment
+ * the family is in (JUG-26), and from now on the last one. `closest` says no
+ * juego matched all of the choices, and this one comes nearest; it is for the
+ * screen that asked, and isn't kept with the juego.
+ * @param {{ after?: string | null }} [options] the activity to move on from
+ * @returns {Promise<Activity & { closest: boolean }>}
+ */
+export async function suggestActivity({ after = null } = {}) {
+  const activity = await ask({ after })
+  write('lastActivityId', activity.id)
+  return activity
+}
+
+/** The chain being fetched, so Home and the reloj ask for one juego between them. */
+let chaining = /** @type {{ from: string, done: Promise<void> } | null} */ (null)
+
+/**
+ * Con lo mismo (JUG-196): the juego to play next with what the one before it
+ * needed, kept in the store so Home and the reloj show the same one and a
+ * visit back doesn't ask for another. `activityId` is null when the catalog
+ * has nothing that continues it, which is remembered too, so the card stops
+ * asking. It is never the last juego: opening it is what makes it that.
+ * @param {string} from the juego whose materials are already out
+ * @returns {Promise<void>}
+ */
+export function chainActivity(from) {
+  if (!UUID.test(from)) return Promise.resolve()
+  if (read('chain')?.from === from) return Promise.resolve()
+  if (chaining?.from === from) return chaining.done
+  const done = (async () => {
+    try {
+      const activity = await ask({ after: from, reuseMaterials: true })
+      write('chain', { from, activityId: activity.id })
+    } catch (error) {
+      if (error instanceof ApiError && error.code === 'NO_REUSABLE_ACTIVITY') write('chain', { from, activityId: null })
+      else throw error
+    } finally {
+      if (chaining?.from === from) chaining = null
+    }
+  })()
+  chaining = { from, done }
+  return done
 }
 
 /**

@@ -13,6 +13,7 @@ import { moodAt, nightAt } from '../clock.js'
 import { activities } from './activities.schema.js'
 import { ANY, matching } from './choices.js'
 import { rank, ratingNow } from './ranking.js'
+import { reusing } from './reuse.js'
 import { NotFoundError } from '../errors.js'
 import { kidIdsOf } from '../families/families.service.js'
 
@@ -22,9 +23,10 @@ import { kidIdsOf } from '../families/families.service.js'
  * @typedef {{
  *   id: string, title: string, minutes: number, place: 'indoor' | 'outdoor',
  *   why: string, needs: string, steps: string[], easier: string, harder: string,
- *   game: Game | null, reaction: Reaction | null,
+ *   game: Game | null, materials: string[], reaction: Reaction | null,
  * }} Activity
  * `game` is the discovery game dealt with it (JUG-177), which Empezar opens instead of the timer.
+ * `materials` are the keys the juego needs, which is what the next one reuses (JUG-196).
  */
 /**
  * @typedef {{
@@ -74,6 +76,7 @@ const activityColumns = {
   easier: activities.easier,
   harder: activities.harder,
   game: activities.game,
+  materials: activities.materials,
   reaction: activities.reaction,
 }
 
@@ -117,15 +120,23 @@ export function createActivitiesService({
      * it is like outside (ranking.js); fills the winner's slots, and deals
      * its game when it is a discovery game (JUG-177); and saves the result
      * with the kids who played and why it won.
+     *
+     * With `reuseMaterials`, only the juegos playable with what the family
+     * already gathered for `after` are ranked (JUG-196), and there being
+     * none is a 404 the web answers with no card.
      * @param {string} familyId
-     * @param {{ after?: string | null, userId?: string | null, mood?: Mood | null, choices?: Choices }} [options] the
-     *   activity to move on from; the adult asking, whose kids sitting out are left out (everyone
-     *   plays without one); the moment the juego is for (JUG-26); and what the parent chose it to
-     *   be (JUG-31). A caller that leaves `mood` out gets the clock's, calm in the evening, so a
-     *   juego is calm before bed even when the client says nothing; `null` asks for no preference.
+     * @param {{
+     *   after?: string | null, reuseMaterials?: boolean, userId?: string | null,
+     *   mood?: Mood | null, choices?: Choices,
+     * }} [options] the activity to move on from, and whether the next juego has to be
+     *   playable with its materials (JUG-196); the adult asking, whose kids sitting out are
+     *   left out (everyone plays without one); the moment the juego is for (JUG-26); and what
+     *   the parent chose it to be (JUG-31). A caller that leaves `mood` out gets the clock's,
+     *   calm in the evening, so a juego is calm before bed even when the client says nothing;
+     *   `null` asks for no preference.
      * @returns {Promise<Suggestion>}
      */
-    async suggest(familyId, { after = null, userId = null, mood, choices = ANY } = {}) {
+    async suggest(familyId, { after = null, reuseMaterials = false, userId = null, mood, choices = ANY } = {}) {
       const at = now()
       const isAfter = sql`${activities.id} = ${after}`
       const [profile, templates, missing, history, others, place] = await Promise.all([
@@ -139,6 +150,7 @@ export function createActivitiesService({
             templateId: activities.templateId,
             createdAt: activities.createdAt,
             reaction: activities.reaction,
+            materials: activities.materials,
             isAfter: isAfter.mapWith(Boolean),
           })
           .from(activities)
@@ -162,8 +174,17 @@ export function createActivitiesService({
         throw new NotFoundError('No activity in the catalog fits this family yet', 'NO_FITTING_ACTIVITY')
       }
 
-      const { chosen, closest } = matching(fitting, choices)
-      const afterTemplateId = history.find((row) => row.isAfter)?.templateId ?? null
+      const previous = history.find((row) => row.isAfter) ?? null
+      // Con lo mismo (JUG-196): the materials are firm, so the choices are
+      // matched inside what can be played with them, not against the catalog.
+      const reuse = reuseMaterials ? previous?.materials ?? [] : null
+      const playable = reuse ? reusing(fitting, reuse) : fitting
+      if (playable.length === 0) {
+        throw new NotFoundError('No activity continues this one with the same materials', 'NO_REUSABLE_ACTIVITY')
+      }
+
+      const { chosen, closest } = matching(playable, choices)
+      const afterTemplateId = previous?.templateId ?? null
       const [{ template, fill, pick }] = rank(chosen, {
         interestThemes: themesOf(profile.interests),
         favoriteToys: profile.toys.filter((toy) => toy.favorite).map((toy) => toy.name),
@@ -188,6 +209,7 @@ export function createActivitiesService({
         easier: render(template.easier, fill),
         harder: render(template.harder, fill),
         game: template.game ? await games.deal(familyId, template.game, profile) : null,
+        materials: template.materials,
       }
       const [{ id }] = await db
         .insert(activities)
@@ -195,7 +217,7 @@ export function createActivitiesService({
           familyId,
           templateId: template.id,
           kidIds: kidIdsOf(profile),
-          pick: { ...pick, choices, closest },
+          pick: { ...pick, choices, closest, reuse },
           ...activity,
         })
         .returning({ id: activities.id })

@@ -6,13 +6,15 @@
  * @typedef {{
  *   id: string, title: string, minutes: number, place: 'indoor' | 'outdoor',
  *   why: string, needs: string, steps: string[], easier: string, harder: string,
- *   game?: Game | null, reaction: 'up' | 'down' | null,
+ *   game?: Game | null, materials?: string[], reaction: 'up' | 'down' | null,
  * }} Activity
  * `needs` starts lowercase so a toy name at the start keeps its family spelling;
  * the layout capitalises the sentence where it needs to. `game` is the
  * discovery game Empezar opens instead of the timer (JUG-177); a juego cached
- * before it has none. `reaction` is the feedback tap (JUG-23): how the juego
- * went, or null while the parent hasn't said.
+ * before it has none. `materials` are the keys of what it can't be played
+ * without (JUG-196), which is what Con lo mismo picks the next juego from, and
+ * a juego cached before it has none either. `reaction` is the feedback tap
+ * (JUG-23): how the juego went, or null while the parent hasn't said.
  */
 /**
  * @typedef {{ type: 'sounds', set: string, rounds: Round[] }} Game
@@ -62,6 +64,12 @@
 /**
  * @typedef {Outside & { at: number }} StoredOutside
  * The last answer, and when it came, in epoch milliseconds.
+ */
+/**
+ * @typedef {{ from: string, activityId: string | null }} Chain
+ * Con lo mismo (JUG-196): the juego to play next with the materials `from` needed.
+ * `activityId` is null when nothing in the catalog continues it, which is remembered
+ * so the card stops asking.
  */
 /**
  * @typedef {{ activityId: string, endsAt: number }} Timer

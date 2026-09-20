@@ -28,6 +28,10 @@ export const activities = pgTable(
     // The discovery game dealt with it (JUG-177): for ¿Qué suena?, the five
     // rounds as the parent will play them. Null for every other juego.
     game: jsonb(),
+    // The materials the template needed, by key from src/materials/materials.js
+    // (JUG-196): what the family gathered for this juego, and what the next
+    // one is picked to reuse. Empty for a juego that needs nothing.
+    materials: text().array().notNull().default(sql`'{}'`),
     // The kids who played (JUG-107), for the recommendations and the journal.
     // No foreign key: the record outlives a kid removed from the profile.
     kidIds: uuid().array().notNull().default(sql`'{}'`),
