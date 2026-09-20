@@ -28,7 +28,11 @@
  *   is Jaccard over the tags: categories, themes, skills, energy, and place.
  * - **Freshness.** A template the family saw comes back on an exponential
  *   curve: most of the way after `seenDays`, slower after one they said they
- *   played. It never reaches zero, so something can always be offered.
+ *   played. It never reaches zero, so something can always be offered. The
+ *   discovery games (JUG-128) also share one: once any of them is offered,
+ *   all of them wait on the `gameDays` curve, so ¿Qué suena? comes up about
+ *   as often however many sound sets there are, and most juegos stay
+ *   screen-free.
  * - **Difference.** "Otro juego" is maximal marginal relevance (Carbonell
  *   and Goldstein, 1998) with one item: what is like the juego being left
  *   loses by its similarity to it.
@@ -80,6 +84,7 @@ import { placeholdersIn } from '../catalog/slots.js'
  * @property {number} alike what a reaction to another template counts, times their similarity
  * @property {number} seenDays days after which a template seen is most of the way back
  * @property {number} playedDays the same, for one the family said they played
+ * @property {number} gameDays the same, for every discovery game once any of them was offered
  * @property {number} floor what a template seen a moment ago keeps
  * @property {number} different what a template loses for being like the one being left, times the similarity
  * @property {Record<Mood, Record<Energy, number>>} moment what a template of each energy keeps in each moment
@@ -123,6 +128,8 @@ export const DEFAULT_WEIGHTS = {
   alike: 0.5,
   seenDays: 4,
   playedDays: 10,
+  // Ten sound sets at this come up about as often as three did on their own.
+  gameDays: 2,
   floor: 0.05,
   different: 0.8,
   moment: {
@@ -189,6 +196,10 @@ export function rank(
   const reacted = [...seen.entries()]
     .filter(([, entry]) => entry.ups + entry.downs > 0)
     .map(([id, entry]) => ({ id, ...entry, template: byId.get(id) ?? null }))
+  // When a discovery game was last offered, whichever it was.
+  const lastGame = [...seen.entries()]
+    .filter(([id]) => byId.get(id)?.game)
+    .reduce((/** @type {Date | null} */ last, [, entry]) => (last && last > entry.lastSeen ? last : entry.lastSeen), null)
 
   const pool = firstNonEmpty([
     candidates.filter(({ template }) => template.id !== after?.id && seen.get(template.id)?.last !== 'down'),
@@ -220,7 +231,10 @@ export function rank(
     const sample = betaSample(alpha, beta, random)
     const feedback = 2 * sample
 
-    const freshness = own ? freshnessOf(own, now, weights) : 1
+    let freshness = own ? freshnessOf(own, now, weights) : 1
+    if (template.game && lastGame) {
+      freshness = Math.min(freshness, Math.max(weights.floor, backBy(lastGame, weights.gameDays, now)))
+    }
     const difference = after ? 1 - weights.different * jaccard(tagsOf(template), tagsOf(after)) : 1
     const moment = mood ? weights.moment[mood][template.energy] : 1
     const outside = night ? 'poor' : conditions?.weather
@@ -312,11 +326,20 @@ function summarize(history) {
  * @param {Weights} weights
  */
 function freshnessOf(entry, now, weights) {
-  const curve = (/** @type {Date} */ since, /** @type {number} */ days) =>
-    1 - Math.exp(-Math.max(0, now.getTime() - since.getTime()) / DAY / days)
-  let freshness = curve(entry.lastSeen, weights.seenDays)
-  if (entry.lastPlayed) freshness = Math.min(freshness, curve(entry.lastPlayed, weights.playedDays))
+  let freshness = backBy(entry.lastSeen, weights.seenDays, now)
+  if (entry.lastPlayed) freshness = Math.min(freshness, backBy(entry.lastPlayed, weights.playedDays, now))
   return Math.max(weights.floor, freshness)
+}
+
+/**
+ * How far back something offered at `since` is by `now`, from 0 to 1, on the
+ * curve that is most of the way after `days`: 1 − e^(−elapsed/days).
+ * @param {Date} since
+ * @param {number} days
+ * @param {Date} now
+ */
+function backBy(since, days, now) {
+  return 1 - Math.exp(-Math.max(0, now.getTime() - since.getTime()) / DAY / days)
 }
 
 /** A template's tags, each prefixed so a skill never equals a theme. @param {Template} template */

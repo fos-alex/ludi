@@ -112,6 +112,15 @@ test('every set has enough sounds for a game of four options, and unique keys', 
   }
 })
 
+test('in every set, each sound has two that sound nothing like it, for the youngest', () => {
+  for (const set of SOUND_SETS) {
+    for (const each of set.items) {
+      const unlike = set.items.filter((other) => other.group !== each.group)
+      assert.ok(unlike.length >= optionsFor(20).count - 1, `${set.key}/${each.key}`)
+    }
+  }
+})
+
 test('every sound has its recording and says where it came from (JUG-178)', () => {
   for (const set of SOUND_SETS) {
     for (const each of set.items) {
