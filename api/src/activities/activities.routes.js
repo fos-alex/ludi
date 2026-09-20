@@ -35,7 +35,7 @@ const game = {
 
 const activity = {
   type: 'object',
-  required: ['id', 'title', 'minutes', 'place', 'why', 'needs', 'steps', 'easier', 'harder', 'game', 'reaction'],
+  required: ['id', 'title', 'minutes', 'place', 'why', 'needs', 'steps', 'easier', 'harder', 'game', 'materials', 'reaction'],
   properties: {
     id: { type: 'string' },
     title: { type: 'string' },
@@ -47,6 +47,8 @@ const activity = {
     easier: { type: 'string' },
     harder: { type: 'string' },
     game,
+    // What the juego needs, by key (JUG-196): what the next one reuses.
+    materials: { type: 'array', items: { type: 'string' } },
     reaction,
   },
 }
@@ -57,6 +59,10 @@ const suggestion = {
   properties: {
     // The activity on screen, when the parent asks for another one.
     after: { type: ['string', 'null'], format: 'uuid' },
+    // Con lo mismo (JUG-196): the next juego has to be playable with the
+    // materials `after` needed. Without one to continue, or with nothing in
+    // the catalog that continues it, the answer is 404 NO_REUSABLE_ACTIVITY.
+    reuseMaterials: { type: 'boolean' },
     // The moment the juego is for (JUG-26): calm winds the kids down, lively
     // gets them moving, null asks for no preference. Left out, the server's
     // clock decides, so an old client still gets a calm juego before bed.

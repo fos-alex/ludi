@@ -316,6 +316,21 @@
 }
 
 /*
+ * Con lo mismo (JUG-196): the juego to play next with the materials already
+ * out. On the reloj it sits under the hint, held to the hint's width so the
+ * clock stays the screen; on Home it is one more card in the column.
+ */
+
+.timer__same {
+  align-self: center;
+  width: 100%;
+  max-width: 320px;
+  text-align: left;
+  animation: rise-in var(--motion-moment) var(--ease-play) backwards;
+  animation-delay: var(--motion-stagger);
+}
+
+/*
  * ¿Algo en especial? (JUG-31): the chip above ¡Juguemos!, aligned right like
  * who's playing, and the sheet it opens. Chosen, the chip fills like a
  * pressed toggle, and a long list of choices ends in an ellipsis rather than

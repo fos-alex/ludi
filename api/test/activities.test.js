@@ -224,6 +224,65 @@ test('a juego never needs a material the family does not have, and the common on
   assert.deepEqual(await titles(), ['Con tizas'])
 })
 
+test('con lo mismo: the next juego reuses the materials and asks for one more at most (JUG-196)', async () => {
+  // Their own age, so no other template is in the way.
+  const chain = [
+    template({ slug: 'la-carpa', title: 'La carpa', materials: ['mantas', 'almohadones'] }),
+    template({ slug: 'el-tunel', title: 'El túnel', materials: ['mantas'] }),
+    template({ slug: 'el-puente', title: 'El puente', materials: ['mantas', 'almohadones', 'cinta'] }),
+    template({ slug: 'la-pista', title: 'La pista', materials: ['mantas', 'cinta', 'cajas'] }),
+    template({ slug: 'el-dibujo', title: 'El dibujo', materials: ['papel', 'crayones'] }),
+    template({ slug: 'sin-nada', title: 'Sin nada' }),
+  ]
+  for (const each of chain) await catalog.addActivityTemplate({ ...each, minAgeMonths: 120, maxAgeMonths: 143 })
+  const { cookie } = await signUpAs(api, 'olga@example.com')
+  await putFamily(api, cookie, { ...EXAMPLE_PROFILE, pets: [], toys: [], kids: [{ name: 'Tomi', ageMonths: 130 }] })
+
+  /** The next juego for one already on the floor, or the answer when there is none. */
+  const withTheSame = (/** @type {string} */ id) =>
+    api.app.inject({
+      method: 'POST',
+      url: '/activities/suggestions',
+      headers: { cookie },
+      payload: { after: id, reuseMaterials: true },
+    })
+  /** @param {string} title */
+  const until = async (title) => {
+    let activity = (await suggest(cookie)).json()
+    for (let round = 0; round < 12 && activity.title !== title; round++) activity = (await suggest(cookie, activity.id)).json()
+    assert.equal(activity.title, title, `${title} never came`)
+    return activity
+  }
+
+  // The juego says what it needs, which is what the next one is picked from.
+  const carpa = await until('La carpa')
+  assert.deepEqual(carpa.materials.sort(), ['almohadones', 'mantas'])
+
+  // With the sheets and the cushions out: the túnel needs nothing more, the
+  // puente asks for tape. The pista asks for tape and boxes, and the dibujo
+  // and Sin nada share nothing with them.
+  const seen = new Set()
+  for (let round = 0; round < 8; round++) {
+    const response = await withTheSame(carpa.id)
+    assert.equal(response.statusCode, 201)
+    seen.add(response.json().title)
+  }
+  assert.deepEqual([...seen].sort(), ['El puente', 'El túnel'])
+
+  // Why it was picked is kept with the juego, like the choices (JUG-31).
+  const next = (await withTheSame(carpa.id)).json()
+  const { rows } = await api.pool.query('select materials, pick from activities where id = $1', [next.id])
+  assert.deepEqual(rows[0].pick.reuse.sort(), ['almohadones', 'mantas'])
+  assert.deepEqual(rows[0].materials, next.materials)
+
+  // A juego that needs nothing has nothing to continue.
+  const nada = await until('Sin nada')
+  assert.deepEqual(nada.materials, [])
+  const none = await withTheSame(nada.id)
+  assert.equal(none.statusCode, 404)
+  assert.equal(none.json().code, 'NO_REUSABLE_ACTIVITY')
+})
+
 /** @param {string} cookie @param {string} id @param {unknown} reaction */
 const react = (cookie, id, reaction) =>
   api.app.inject({ method: 'PUT', url: `/activities/${id}/reaction`, headers: { cookie }, payload: { reaction } })

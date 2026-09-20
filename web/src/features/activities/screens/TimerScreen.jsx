@@ -1,6 +1,7 @@
 import { Navigate, useNavigate, useParams } from '@tanstack/react-router'
 import { playingNames } from '../../family'
 import { stopTimer } from '../api'
+import { SameMaterials } from '../components/SameMaterials'
 import { placeText } from '../model'
 import { clockText } from '../../../shared/format'
 import { useCountdown } from '../../../shared/hooks/useCountdown'
@@ -15,6 +16,10 @@ import '../activities.css'
  * down from the activity's own estimate as a hint, not a target, and is
  * silent at zero: jacarandá petals come down once, and that is all
  * (JUG-159). The app never logs or reports how long they played.
+ *
+ * Under the clock, Con lo mismo (JUG-196): the juego to play next with what
+ * this one needed, so the fifteen minutes of gathering buy more than one
+ * game. It is there from the start, and a juego that needs nothing has none.
  * Copy on this screen needs a voice pass.
  */
 export function TimerScreen() {
@@ -62,6 +67,7 @@ export function TimerScreen() {
           <br />
           El reloj sigue solo.
         </p>
+        <SameMaterials activity={activity} className="timer__same" />
       </Body>
       <Footer>
         <SecondaryButton size="lg" outline="primary" onClick={goBack}>
