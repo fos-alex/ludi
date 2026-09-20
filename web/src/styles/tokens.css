@@ -65,6 +65,17 @@
   --dot-sun: #E8C98A;
   --dot-jacaranda: #6B4EA8;
 
+  /*
+   * The admin's charts (JUG-199), and nothing else. The wordmark's dot colours
+   * belong to the moments, so a chart series gets its own: jacarandá, and a
+   * green with enough chroma to read as a colour rather than as grey. The pair
+   * is checked for colour-vision deficiency separation and for contrast
+   * against the card, in both sets.
+   */
+  --chart-1: #6B4EA8;
+  --chart-2: #2E9E5B;
+  --chart-grid: #EADFF3;
+
   --focus: #2A2140;
 
   /*
@@ -135,6 +146,11 @@
   --dot-grass: #8FD49E;
   --dot-sun: #E8C98A;
   --dot-jacaranda: #B79BF0;
+
+  /* The same two, stepped for the dark card, and checked against it. */
+  --chart-1: #9277DB;
+  --chart-2: #2FA265;
+  --chart-grid: #3A3160;
 
   --focus: #F3EEFF;
 }

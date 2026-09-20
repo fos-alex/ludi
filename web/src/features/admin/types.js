@@ -42,4 +42,21 @@
  * was sent, so the link can be passed on by hand.
  */
 
+/**
+ * @typedef {'juego_shown' | 'juego_played' | 'story_told' | 'series_started' | 'account_created' | 'family_created'} UsageEvent
+ * The six things the API counts (JUG-198).
+ */
+
+/** @typedef {Record<UsageEvent, number>} EventCounts One number per event, all six always there. */
+
+/** @typedef {{ day: string } & EventCounts} DayCounts One day, as `YYYY-MM-DD` in Buenos Aires. */
+
+/**
+ * @typedef {object} Usage what the Uso page draws (JUG-199)
+ * @property {EventCounts} totals since the beginning
+ * @property {EventCounts} recent the last seven days
+ * @property {DayCounts[]} days one entry per day for the last three months, oldest first, with no gaps
+ * @property {number} familiesPlayed how many families have played at least one juego
+ */
+
 export {}
