@@ -105,7 +105,11 @@ export function UsageScreen() {
 
             <StatusLine>
               Los días se cuentan en Buenos Aires, así que un cuento de las once de la noche queda en esa noche. Los mismos
-              eventos van a Google Analytics, que sirve para revolver; estos números son los de acá y están al día.
+              eventos van a{' '}
+              <a href="https://analytics.google.com" target="_blank" rel="noreferrer">
+                Google Analytics
+              </a>
+              , que sirve para revolver; estos números son los de acá y están al día.
             </StatusLine>
           </>
         )}
