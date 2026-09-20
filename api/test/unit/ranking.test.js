@@ -157,6 +157,28 @@ test('a template the family said they played waits longer than one they only saw
   assert.ok(pick('played').freshness < pick('looked').freshness)
 })
 
+test('once a discovery game is offered, every discovery game waits on the gameDays curve (JUG-128)', () => {
+  const game = (/** @type {string} */ set) => ({ type: /** @type {const} */ ('sounds'), set })
+  const granja = template({ slug: 'granja', game: game('granja') })
+  const barrio = template({ slug: 'barrio', game: game('barrio') })
+  const juego = template({ slug: 'juego' })
+  /** @param {ReturnType<typeof seen>[]} history @param {string} slug */
+  const pick = (history, slug) => {
+    const ranked = rank([candidate(barrio), candidate(juego)], context({ history, catalog: [granja, barrio, juego] }))
+    return /** @type {any} */ (ranked.find((each) => each.template.slug === slug)).pick
+  }
+  // Offered a moment ago: another set waits as if it had been offered itself.
+  assert.equal(pick([seen('granja', daysAgo(0.01))], 'barrio').freshness, DEFAULT_WEIGHTS.floor)
+  // Most of the way back after gameDays, sooner than a template seen itself.
+  const days = DEFAULT_WEIGHTS.gameDays
+  assert.ok(Math.abs(pick([seen('granja', daysAgo(days))], 'barrio').freshness - (1 - Math.exp(-1))) < 1e-9)
+  assert.ok(pick([seen('granja', daysAgo(days))], 'barrio').freshness > pick([seen('barrio', daysAgo(days))], 'barrio').freshness)
+  // A juego that isn't a game doesn't wait for one.
+  assert.equal(pick([seen('granja', daysAgo(0.01))], 'juego').freshness, 1)
+  // Nor does a game wait for a juego.
+  assert.equal(pick([seen('juego', daysAgo(0.01))], 'barrio').freshness, 1)
+})
+
 test('thumbs up from the family make a template win more often, without making it certain', () => {
   const liked = candidate(template({ slug: 'liked' }))
   const other = candidate(template({ slug: 'other' }))

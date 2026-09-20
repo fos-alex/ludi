@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { after, before, test } from 'node:test'
 import { createCatalogService } from '../src/catalog/catalog.service.js'
+import { SOUND_SETS } from '../src/games/sounds.js'
 import { EXAMPLE_PROFILE, putFamily, signUpAs, startApi } from './helpers.js'
 
 /** ¿Qué suena? with the farm animals, as the catalog seed has it. */
@@ -101,5 +102,17 @@ test('a sound is served to a signed-in adult, and nothing else is', async () => 
   for (const url of ['/sounds/granja/credits.json', '/sounds/granja/..%2Fcredits.json']) {
     const response = await api.app.inject({ method: 'GET', url, headers: { cookie } })
     assert.equal(response.statusCode, 400, url)
+  }
+})
+
+test('every sound of every set is served (JUG-179 to JUG-185)', async () => {
+  const { cookie } = await signUpAs(api, 'dani@example.com')
+  for (const set of SOUND_SETS) {
+    for (const item of set.items) {
+      const url = `/sounds/${set.key}/${item.key}.mp3`
+      const sound = await api.app.inject({ method: 'GET', url, headers: { cookie } })
+      assert.equal(sound.statusCode, 200, url)
+      assert.equal(sound.headers['content-type'], 'audio/mpeg', url)
+    }
   }
 })

@@ -155,6 +155,7 @@ systemctl --user daemon-reload && systemctl --user enable --now ludi-nightly.tim
 | `prueba@ludi.local` | A toddler and a pet: Milán, 2 years and 2 months, and the dog Inca. Likes dinosaurs and horses, with five named toys. Parents Alex (Papá) and Caro (Mamá), in an apartment |
 | `bebe@ludi.local` | A baby and no pet: Olivia, 8 months. Likes songs and water, with two toys |
 | `hermanos@ludi.local` | Two kids far apart in age: Tomás, 8 years and 2 months, and Emma, 4 years and 4 months, and the cat Michi. A house with a garden, and no parents saved |
+| `cinco@ludi.local` | One kid of five: Lola, 5 years and 4 months, who likes birds and music, with three toys and no pet. The only family old enough for the juegos from age 5, like ¿Qué suena? Pájaros del barrio |
 
 ### Admin
 
@@ -203,4 +204,4 @@ These terms are added under section 7 of the license:
 2. **Modified versions are marked, under 7(c).** A modified version must say that it has been modified, and must not present itself as the original.
 3. **The name, under 7(e).** The license grants no rights to the name Ludi, its wordmark, or its app icon as trademarks. A modified version that is shared or run for others uses its own name and icon. It may say that it is based on Ludi.
 
-**The recordings aren't Ludi's.** The sounds in `api/sounds/`, which *¿Qué suena?* plays, are other people's recordings under their own licenses: CC0, Creative Commons Attribution, or Attribution-NonCommercial. `api/sounds/credits.json` names the author, the source, and the license of each one, and the game credits the author on screen when the license asks for it. They are not under the AGPL, and a version that is sold can't use the NonCommercial ones (JUG-178).
+**The recordings aren't Ludi's.** The sounds in `api/sounds/`, which *¿Qué suena?* plays, are other people's recordings under their own licenses: CC0, Creative Commons Attribution, Attribution-NonCommercial, and the ShareAlike versions of those. `api/sounds/credits.json` names the author, the source, and the license of each one, and the game credits the author on screen when the license asks for it. They are not under the AGPL. A version that is sold can't use the NonCommercial ones, and every clip here is trimmed, so a ShareAlike recording's clip carries that same license (JUG-178, JUG-179 to JUG-185).

@@ -98,4 +98,19 @@ export const accounts = [
       },
     },
   },
+  // One kid of five, the only family old enough for the juegos from 5, like
+  // the birds of ¿Qué suena? (JUG-183); a toy guitar and drum name options in
+  // the instruments.
+  {
+    name: 'Cinco',
+    email: 'cinco@ludi.local',
+    password: PASSWORD,
+    family: {
+      name: 'Familia de Lola',
+      home: 'departamento',
+      kids: [{ name: 'Lola', ageMonths: 64, interests: ['los pájaros', 'la música'] }],
+      pets: [],
+      toys: [{ name: 'la guitarrita' }, { name: 'el tambor rojo' }, { name: 'la lupa' }],
+    },
+  },
 ]

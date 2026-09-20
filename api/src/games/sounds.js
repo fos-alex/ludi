@@ -1,7 +1,8 @@
 /**
- * The sound sets of ¿Qué suena? (JUG-177, JUG-178), a list in code like the
- * materials and the themes. A set is played as a juego: its catalog template
- * names it in `game`, and each game deals five of its sounds.
+ * The sound sets of ¿Qué suena? (JUG-177, and JUG-178 to JUG-185 for the
+ * sets), a list in code like the materials and the themes. A set is played
+ * as a juego: its catalog template names it in `game`, and each game deals
+ * five of its sounds.
  *
  * Each sound is `api/sounds/<set>/<key>.mp3`, and `api/sounds/credits.json`
  * says where every recording came from and under what license. An item has
@@ -95,6 +96,112 @@ export const SOUND_SETS = [
       { key: 'puerta', name: 'la puerta', group: 'manos', stems: [] },
       { key: 'llaves', name: 'las llaves', group: 'manos', stems: ['llave'] },
       { key: 'cierre', name: 'un cierre', group: 'manos', stems: [] },
+    ],
+  },
+  {
+    key: 'instrumentos',
+    name: 'Instrumentos',
+    items: [
+      { key: 'piano', name: 'un piano', group: 'teclas', stems: ['pian', 'teclado'] },
+      { key: 'xilofono', name: 'un xilófono', group: 'teclas', stems: ['xilof', 'metalof'] },
+      { key: 'guitarra', name: 'una guitarra', group: 'cuerdas', stems: ['guitarr'] },
+      { key: 'charango', name: 'un charango', group: 'cuerdas', stems: ['charang'] },
+      { key: 'violin', name: 'un violín', group: 'cuerdas', stems: ['violin'] },
+      { key: 'trompeta', name: 'una trompeta', group: 'viento', stems: ['trompeta', 'trompetit', 'cornet'] },
+      { key: 'flauta', name: 'una flauta', group: 'viento', stems: ['flaut'] },
+      { key: 'armonica', name: 'una armónica', group: 'viento', stems: ['armonic'] },
+      { key: 'bandoneon', name: 'un bandoneón', group: 'viento', stems: ['bandone', 'acordeon'] },
+      { key: 'tambor', name: 'un tambor', group: 'parches', stems: ['tambor'] },
+      { key: 'bombo', name: 'un bombo', group: 'parches', stems: ['bombo$', 'bombos$'] },
+      { key: 'maracas', name: 'unas maracas', group: 'sacudir', stems: ['maraca'] },
+      { key: 'pandereta', name: 'una pandereta', group: 'sacudir', stems: ['pandere', 'pandero'] },
+    ],
+  },
+  {
+    key: 'cuerpo',
+    name: 'Sonidos del cuerpo',
+    items: [
+      { key: 'aplauso', name: 'un aplauso', group: 'manos', stems: [] },
+      { key: 'estornudo', name: 'un estornudo', group: 'golpes', stems: [] },
+      { key: 'tos', name: 'la tos', group: 'golpes', stems: [] },
+      { key: 'hipo', name: 'el hipo', group: 'golpes', stems: [] },
+      { key: 'bostezo', name: 'un bostezo', group: 'sueño', stems: [] },
+      { key: 'ronquido', name: 'un ronquido', group: 'sueño', stems: [] },
+      { key: 'silbido', name: 'un silbido', group: 'labios', stems: [] },
+      { key: 'beso', name: 'un beso', group: 'labios', stems: [] },
+      { key: 'risa', name: 'una risa', group: 'risa', stems: [] },
+    ],
+  },
+  {
+    key: 'salvajes',
+    name: 'Animales salvajes',
+    items: [
+      { key: 'leon', name: 'un león', group: 'rugen', stems: ['leon$', 'leones$', 'leona$', 'leonas$', 'leoncit'] },
+      { key: 'oso', name: 'un oso', group: 'rugen', stems: ['oso$', 'osos$', 'osit', 'osezn'] },
+      { key: 'lobo-marino', name: 'un lobo marino', group: 'rugen', stems: ['marino$', 'marinos$', 'foca', 'foquit'] },
+      { key: 'elefante', name: 'un elefante', group: 'trompa', stems: ['elefant'] },
+      { key: 'lobo', name: 'un lobo', group: 'aullan', stems: ['lobo$', 'lobos$', 'lobit'] },
+      { key: 'buho', name: 'un búho', group: 'aullan', stems: ['buho', 'lechuz'] },
+      { key: 'mono', name: 'un mono', group: 'gritan', stems: ['mono$', 'monos$', 'monit', 'chimpanc'] },
+      { key: 'pinguino', name: 'un pingüino', group: 'gritan', stems: ['pinguin'] },
+      { key: 'rana', name: 'una rana', group: 'chicos', stems: ['rana', 'ranit', 'sapo', 'sapit'] },
+      { key: 'serpiente', name: 'una serpiente', group: 'chicos', stems: ['serpient', 'vibora', 'culebr'] },
+    ],
+  },
+  {
+    key: 'barrio',
+    name: 'El barrio',
+    items: [
+      { key: 'colectivo', name: 'el colectivo', group: 'transito', stems: ['colectiv', 'bondi', 'omnibus'] },
+      { key: 'subte', name: 'el subte', group: 'transito', stems: ['subte', 'metro$'] },
+      { key: 'bocinazo', name: 'un bocinazo', group: 'transito', stems: ['bocin'] },
+      { key: 'campana', name: 'las campanas', group: 'campanas', stems: ['campana$', 'campanas$'] },
+      { key: 'barrera', name: 'la barrera del tren', group: 'campanas', stems: ['barrera'] },
+      { key: 'afilador', name: 'el afilador', group: 'agudos', stems: [] },
+      { key: 'cotorras', name: 'las cotorras', group: 'agudos', stems: ['cotorr', 'loro$', 'loros$', 'lorit'] },
+      { key: 'obra', name: 'una obra', group: 'obra', stems: [] },
+    ],
+  },
+  {
+    key: 'pajaros',
+    name: 'Pájaros del barrio',
+    items: [
+      { key: 'tero', name: 'un tero', group: 'gritan', stems: ['tero$', 'teros$'] },
+      { key: 'hornero', name: 'un hornero', group: 'gritan', stems: ['horner'] },
+      { key: 'benteveo', name: 'un benteveo', group: 'gritan', stems: ['bentev', 'bichofeo'] },
+      { key: 'cotorra', name: 'una cotorra', group: 'gritan', stems: ['cotorr', 'loro$', 'loros$', 'lorit'] },
+      { key: 'zorzal', name: 'un zorzal', group: 'cantan', stems: ['zorzal'] },
+      { key: 'calandria', name: 'una calandria', group: 'cantan', stems: ['calandri'] },
+      { key: 'gorrion', name: 'un gorrión', group: 'cantan', stems: ['gorrion'] },
+      { key: 'paloma', name: 'una paloma', group: 'paloma', stems: ['palom'] },
+    ],
+  },
+  {
+    key: 'tiempo',
+    name: 'Lluvia, viento y truenos',
+    items: [
+      { key: 'lluvia', name: 'la lluvia', group: 'cae', stems: [] },
+      { key: 'llovizna', name: 'la llovizna', group: 'cae', stems: [] },
+      { key: 'granizo', name: 'el granizo', group: 'cae', stems: [] },
+      { key: 'gotera', name: 'una gotera', group: 'cae', stems: [] },
+      { key: 'trueno', name: 'un trueno', group: 'trueno', stems: [] },
+      { key: 'viento', name: 'el viento', group: 'viento', stems: [] },
+      { key: 'charcos', name: 'los charcos', group: 'pasos', stems: [] },
+      { key: 'nieve', name: 'la nieve', group: 'pasos', stems: [] },
+    ],
+  },
+  {
+    key: 'naturaleza',
+    name: 'La naturaleza',
+    items: [
+      { key: 'olas', name: 'las olas', group: 'agua', stems: [] },
+      { key: 'arroyo', name: 'un arroyo', group: 'agua', stems: [] },
+      { key: 'cascada', name: 'una cascada', group: 'agua', stems: [] },
+      { key: 'grillos', name: 'los grillos', group: 'bichos', stems: ['grillo', 'grillit'] },
+      { key: 'chicharras', name: 'las chicharras', group: 'bichos', stems: ['chicharr', 'cigarra'] },
+      { key: 'abejas', name: 'las abejas', group: 'bichos', stems: ['abeja', 'abejit', 'abejorr'] },
+      { key: 'fuego', name: 'el fuego', group: 'crujen', stems: [] },
+      { key: 'hojas', name: 'las hojas secas', group: 'crujen', stems: [] },
     ],
   },
 ]
