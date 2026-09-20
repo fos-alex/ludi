@@ -94,3 +94,4 @@ test('an unknown provider stops the API at startup', () => {
     (error) => error instanceof ConfigError && /LLM_PROVIDER must be opencode, openrouter, or claude-code/.test(error.message),
   )
 })
+

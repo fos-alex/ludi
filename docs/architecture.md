@@ -134,6 +134,7 @@ What that means in practice:
 - Backups are encrypted and stored off the droplet.
 - Argentina's Ley 25.326, overseen by the AAIP, is the first legal framework to satisfy. Each new market adds its own.
 - What parents send in their own words is kept only for auditing the playtest (JUG-116), only while `AUDIT_TRANSCRIPTS` is on, which is never in production. Deleting an account or family deletes those rows. The texts never go into logs.
+- Usage is counted as events, not as people (JUG-198). A row says that a juego was played, not who played it or what it was; `usage_events` holds the family and account ids so the counts can be grouped, and deleting an account leaves the rows behind with both set to null. It stays on the droplet.
 
 ## Operations
 

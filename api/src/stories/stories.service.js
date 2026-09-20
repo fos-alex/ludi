@@ -98,10 +98,12 @@ const DEFAULT_SERIES_EPISODES = 10
  *   random?: () => number,
  *   now?: () => Date,
  *   maxEpisodes?: number,
+ *   usage?: import('../usage/usage.service.js').UsageService | null,
  * }} deps `llm` absent means template stories only; `model` is the model's name,
  *   which the story audit records; `logger` is where a failed audit row is
  *   reported; `now` lets tests fix the moment; `maxEpisodes` is how long a
- *   series may grow.
+ *   series may grow; `usage` counts the stories told and the series started
+ *   (JUG-198), and absent counts nothing.
  */
 export function createStoriesService({
   db,
@@ -113,6 +115,7 @@ export function createStoriesService({
   random = Math.random,
   now = () => new Date(),
   maxEpisodes = DEFAULT_SERIES_EPISODES,
+  usage = null,
 }) {
   const templates = createTemplateStories({ db, catalog, families, random })
   // What was offered, picked and written, for adjusting the casting weights (JUG-139).
@@ -276,6 +279,10 @@ export function createStoriesService({
         .where(and(eq(stories.familyId, familyId), eq(stories.id, storyId)))
         .returning({ id: stories.id })
       if (!row) throw new NotFoundError('No such story')
+      // The one place a story being told is counted (JUG-198). The reading
+      // screen marks a story read as soon as it has an id, a new one included,
+      // so this catches every read once and only once.
+      await usage?.record('story_told', { familyId })
     },
 
     /**
@@ -317,7 +324,9 @@ export function createStoriesService({
      * @returns {Promise<Series>}
      */
     async makeSeries(familyId, storyId) {
-      return series.fromStory(familyId, storyId)
+      const started = await series.fromStory(familyId, storyId)
+      await usage?.record('series_started', { familyId })
+      return started
     },
 
     /** The family's series, newest first, each with its episodes in order. @param {string} familyId @returns {Promise<Series[]>} */
