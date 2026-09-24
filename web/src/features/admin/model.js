@@ -277,3 +277,79 @@ export const inviteNews = ({ email, link }) =>
   link
     ? { text: `El email está apagado, así que mandale este link a ${email}:`, link }
     : { text: `Le mandamos la invitación a ${email}.`, link: null }
+
+/** @typedef {import('./types').DayCounts} DayCounts */
+/** @typedef {import('./types').UsageEvent} UsageEvent */
+
+/** How far back the Uso page's charts look. The API sends three months; the charts draw the last month. */
+export const CHART_DAYS = 30
+
+/** Each event as the Uso page names it, in the order it shows them. @type {[UsageEvent, string][]} */
+export const USAGE_LABELS = [
+  ['juego_shown', 'Juegos mostrados'],
+  ['juego_played', 'Juegos jugados'],
+  ['story_told', 'Cuentos contados'],
+  ['series_started', 'Series empezadas'],
+  ['account_created', 'Cuentas creadas'],
+  ['family_created', 'Familias armadas'],
+]
+
+/** A day as the charts label it: `19 sep`. @param {string} day `YYYY-MM-DD` */
+export function dayLabel(day) {
+  const [, month, date] = day.split('-')
+  if (!month || !date) return ''
+  return `${Number(date)} ${MONTHS[Number(month) - 1]}`
+}
+
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
+/**
+ * How far inside the box the lines are drawn, in the SVG's own units. Without
+ * it the first and last points sit on the border and a peak is cut off by it.
+ */
+const PAD = { x: 10, y: 14 }
+
+/**
+ * The geometry of one line chart, in the SVG's own units, so the component
+ * only draws what this works out. The y axis always starts at zero and always
+ * reaches at least one, so a chart with nothing in it is a flat line on the
+ * floor rather than a divide by zero.
+ * @param {DayCounts[]} days oldest first
+ * @param {UsageEvent[]} events one line each
+ * @param {{ width: number, height: number }} box the SVG's viewBox
+ * @returns {{
+ *   max: number,
+ *   grid: { value: number, y: number }[],
+ *   lines: { event: UsageEvent, points: string }[],
+ *   xOf: (index: number) => number,
+ *   yOf: (value: number) => number,
+ * }}
+ */
+export function chartGeometry(days, events, { width, height }) {
+  const max = Math.max(1, ...days.flatMap((day) => events.map((event) => day[event])))
+  const plot = { width: width - PAD.x * 2, height: height - PAD.y * 2 }
+  const xOf = (index) => PAD.x + (days.length < 2 ? plot.width / 2 : (index / (days.length - 1)) * plot.width)
+  const yOf = (value) => PAD.y + plot.height - (value / max) * plot.height
+
+  return {
+    max,
+    // Three lines: the floor, the top, and the middle, which is what a reader
+    // measures against without counting.
+    grid: [0, max / 2, max].map((value) => ({ value, y: yOf(value) })),
+    lines: events.map((event) => ({
+      event,
+      points: days.map((day, index) => `${xOf(index)},${yOf(day[event])}`).join(' '),
+    })),
+    xOf,
+    yOf,
+  }
+}
+
+/**
+ * Which day the pointer is over, from where it fell across the plot.
+ * @param {number} ratio 0 at the left edge, 1 at the right
+ * @param {number} length how many days are drawn
+ */
+export function dayAt(ratio, length) {
+  return Math.min(length - 1, Math.max(0, Math.round(ratio * (length - 1))))
+}

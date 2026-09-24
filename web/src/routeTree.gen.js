@@ -21,6 +21,7 @@ import { Route as MaterialesRouteImport } from './routes/materiales'
 import { Route as VerificarRouteImport } from './routes/verificar'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminIdRouteImport } from './routes/admin.$id'
+import { Route as AdminUsoRouteImport } from './routes/admin.uso'
 import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
 import { Route as CuentoIdRouteImport } from './routes/cuento.$id'
 import { Route as CuentoPedidoRouteImport } from './routes/cuento.pedido'
@@ -95,6 +96,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminIdRoute = AdminIdRouteImport.update({
   id: '/admin/$id',
   path: '/admin/$id',
+  getParentRoute: () => rootRouteImport,
+})
+const AdminUsoRoute = AdminUsoRouteImport.update({
+  id: '/admin/uso',
+  path: '/admin/uso',
   getParentRoute: () => rootRouteImport,
 })
 const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
@@ -185,6 +191,7 @@ const rootRouteChildren = {
   MaterialesRoute: MaterialesRoute,
   VerificarRoute: VerificarRoute,
   AdminIdRoute: AdminIdRoute,
+  AdminUsoRoute: AdminUsoRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
   CuentoIdRoute: CuentoIdRoute,
   CuentoPedidoRoute: CuentoPedidoRoute,
