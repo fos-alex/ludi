@@ -43,6 +43,10 @@ import { createToysController } from './toys/toys.controller.js'
 import { toysRoutes } from './toys/toys.routes.js'
 import { createToysService } from './toys/toys.service.js'
 import { createToysUnderstanding } from './toys/understanding.js'
+import { createGa } from './usage/ga.js'
+import { createUsageController } from './usage/usage.controller.js'
+import { adminUsageRoutes } from './usage/usage.routes.js'
+import { createUsageService } from './usage/usage.service.js'
 import { createTranscriber } from './voice/transcriber.js'
 import { createVoiceController } from './voice/voice.controller.js'
 import { voiceRoutes } from './voice/voice.routes.js'
@@ -87,10 +91,19 @@ export function buildApp({
   geocoder,
 }) {
   const app = Fastify({ logger })
+  // What families do with Ludi (JUG-198): kept in usage_events for the
+  // admin's Uso page, and sent to GA4 as well where a data stream is
+  // configured. Nothing a parent does fails or waits because of it.
+  const usage = createUsageService({
+    db,
+    ga: config.analytics ? createGa({ config: config.analytics, secret: config.auth.secret, logger: app.log, now }) : null,
+    logger: app.log,
+    now,
+  })
   const accounts = createAccountsService({ db })
   // Where the family's own words for where they live are on the map (JUG-25).
   const places = geocoder === undefined ? createGeocoder({ config: config.places }) : geocoder
-  const families = createFamiliesService({ db, geocoder: places })
+  const families = createFamiliesService({ db, geocoder: places, usage })
   const toys = createToysService({ db })
   const materials = createMaterialsService({ db })
   // Every activity and story template comes from here.
@@ -106,7 +119,7 @@ export function buildApp({
   })
   // Discovery games (JUG-128), dealt when their juego is suggested.
   const games = createGamesService({ toys, random })
-  const activities = createActivitiesService({ db, catalog, families, games, materials, weather, random, now })
+  const activities = createActivitiesService({ db, catalog, families, games, materials, weather, random, now, usage })
   // One LLM for stories and for reading a family's text; null without a key.
   const llmClient = llm ?? createLlm({ config: config.llm })
   // `model` is the model's name, which the story audit records beside each call.
@@ -120,6 +133,7 @@ export function buildApp({
     model: config.llm.model,
     maxEpisodes: config.stories.episodesPerSeries,
     logger: app.log,
+    usage,
   })
   // The juegos played and the stories read lately (JUG-188).
   const history = createHistoryService({ activities, stories, now })
@@ -131,7 +145,7 @@ export function buildApp({
   // Null without SMTP_HOST.
   const mailerClient = mailer === undefined ? createMailer({ config: config.email }) : mailer
   const invitations = createInvitationsService({ db, mailer: mailerClient, appUrl: config.auth.url, now })
-  const auth = createAuth({ config: config.auth, db, invitations })
+  const auth = createAuth({ config: config.auth, db, invitations, usage })
   const requireSession = createRequireSession(auth)
   const requireFamily = createRequireFamily(families)
 
@@ -172,6 +186,7 @@ export function buildApp({
     app.register(catalogRoutes, { controller: createCatalogController({ catalog, activities }) })
     app.register(adminUsersRoutes, { controller: createInvitationsController({ invitations }) })
     app.register(adminAccountsRoutes, { controller: createAccountsController({ accounts, families, understanding }) })
+    app.register(adminUsageRoutes, { controller: createUsageController({ usage }) })
   }
 
   return app

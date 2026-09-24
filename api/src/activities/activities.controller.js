@@ -51,7 +51,7 @@ export function createActivitiesController({ activities }) {
     /** @type {import('fastify').RouteHandlerMethod} */
     async play(request, reply) {
       const { id } = /** @type {{ id: string }} */ (request.params)
-      await activities.play(familyOf(request), id)
+      await activities.play(familyOf(request), id, { userId: userOf(request).id })
       return reply.code(204).send()
     },
   }

@@ -87,6 +87,14 @@ const LLM_PROVIDERS = {
  * @property {EmailConfig} email the SMTP service email is sent through (JUG-169)
  * @property {{ enabled: boolean }} admin the catalog admin, which has no login yet
  * @property {{ transcripts: boolean }} audit whether parents' own words are kept in audit_transcripts (JUG-116)
+ * @property {AnalyticsConfig | null} analytics where the usage events also go (JUG-198); without it they only stay here
+ */
+
+/**
+ * @typedef {object} AnalyticsConfig
+ * @property {string} measurementId the GA4 data stream's, `G-` and ten or so characters
+ * @property {string} apiSecret from the same data stream, under Measurement Protocol API secrets
+ * @property {boolean} debug send to GA4's debug endpoint, which answers with what is wrong with a payload
  */
 
 /** How many episodes a story series holds before it is finished (JUG-59). */
@@ -156,7 +164,29 @@ export function loadConfig(env = process.env) {
     admin: { enabled: flag(env, 'ADMIN_ENABLED') },
     // Off unless set: the texts hold the family's names.
     audit: { transcripts: flag(env, 'AUDIT_TRANSCRIPTS') },
+    analytics: loadAnalytics(env),
   }
+}
+
+/**
+ * The GA4 data stream the usage events also go to (JUG-198). Both settings or
+ * neither: one without the other is a mistake worth stopping for. Without
+ * them the events are still recorded in usage_events, which is what the
+ * admin's Uso page reads, and nothing is sent to Google.
+ * @param {NodeJS.ProcessEnv} env
+ * @returns {AnalyticsConfig | null}
+ */
+function loadAnalytics(env) {
+  const measurementId = env.ANALYTICS_MEASUREMENT_ID?.trim()
+  const apiSecret = env.ANALYTICS_API_SECRET?.trim()
+  if (!measurementId && !apiSecret) return null
+  if (!measurementId || !apiSecret) {
+    throw new ConfigError('ANALYTICS_MEASUREMENT_ID and ANALYTICS_API_SECRET go together: set both to send usage to GA4, or neither')
+  }
+  if (!measurementId.startsWith('G-')) {
+    throw new ConfigError(`ANALYTICS_MEASUREMENT_ID is the GA4 data stream's, which starts with "G-", not "${measurementId}"`)
+  }
+  return { measurementId, apiSecret, debug: flag(env, 'ANALYTICS_DEBUG') }
 }
 
 /**

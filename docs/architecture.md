@@ -118,6 +118,7 @@ The tables themselves, and what each domain owns, are in [api/AGENTS.md](../api/
 | Weather | Matching suggestions to conditions | Open-Meteo, which needs no account and no key (JUG-25). Cached per location, keyed by coordinates rounded to about a kilometre, so one call covers a city. It never fails a suggestion: weather that can't be read leaves the ranking as it was. |
 | Geocoding | Turning the words a family writes for where they live into coordinates | Open-Meteo's geocoding service, asked only when those words change (JUG-25). A city or a zone, never a home: nothing asks the device where it is. |
 | Maps | Nearby plazas and kid-friendly places | Maps data is enough for v1; no curated event listings. |
+| Analytics | Counting what families do with Ludi (JUG-198) | Google Analytics 4, spoken from the API with the Measurement Protocol, so the web app ships no tracking script and loads no extra bytes. Six events go to it, each an event name and nothing more: the `client_id` is an HMAC of the family's id under the server's secret, and no name, email, age, or story text is ever sent. Ads personalisation is off on every event. The same events are recorded in `usage_events` on the droplet, which is what the admin's Uso page reads; Google is not in the path of anything the app shows. Off unless `ANALYTICS_MEASUREMENT_ID` and `ANALYTICS_API_SECRET` are set. |
 | Email | Invitations to sign up (JUG-34); email verification when it comes | Resend's free plan over SMTP, 3,000 emails a month and 100 a day. Any SMTP service is a change of environment variables (JUG-169). DigitalOcean blocks SMTP's usual ports on droplets, so it uses 2465. Only the address and the message leave the server. |
 
 Each sits behind a thin internal interface, so a provider can be swapped without touching product code.
@@ -133,6 +134,7 @@ What that means in practice:
 - Backups are encrypted and stored off the droplet.
 - Argentina's Ley 25.326, overseen by the AAIP, is the first legal framework to satisfy. Each new market adds its own.
 - What parents send in their own words is kept only for auditing the playtest (JUG-116), only while `AUDIT_TRANSCRIPTS` is on, which is never in production. Deleting an account or family deletes those rows. The texts never go into logs.
+- Usage is counted as events, not as people (JUG-198). A row says that a juego was played, not who played it or what it was; `usage_events` holds the family and account ids so the counts can be grouped, and deleting an account leaves the rows behind with both set to null. What Google gets is smaller still: the event's name under a pseudonym it cannot undo.
 
 ## Operations
 

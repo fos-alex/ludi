@@ -94,3 +94,34 @@ test('an unknown provider stops the API at startup', () => {
     (error) => error instanceof ConfigError && /LLM_PROVIDER must be opencode, openrouter, or claude-code/.test(error.message),
   )
 })
+
+/** @param {NodeJS.ProcessEnv} env */
+const analyticsOf = (env) => loadConfig({ ...REQUIRED, ...env }).analytics
+
+test('usage goes to GA4 only with both the measurement id and the api secret', () => {
+  assert.equal(analyticsOf({}), null, 'off unless it is set up')
+  assert.deepEqual(analyticsOf({ ANALYTICS_MEASUREMENT_ID: ' G-ABC123 ', ANALYTICS_API_SECRET: ' a-secret ' }), {
+    measurementId: 'G-ABC123',
+    apiSecret: 'a-secret',
+    debug: false,
+  })
+
+  for (const env of [{ ANALYTICS_MEASUREMENT_ID: 'G-ABC123' }, { ANALYTICS_API_SECRET: 'a-secret' }]) {
+    assert.throws(
+      () => analyticsOf(env),
+      (error) => error instanceof ConfigError && /ANALYTICS_MEASUREMENT_ID and ANALYTICS_API_SECRET/.test(error.message),
+    )
+  }
+})
+
+test('a measurement id that is not a GA4 data stream is refused', () => {
+  assert.throws(
+    () => analyticsOf({ ANALYTICS_MEASUREMENT_ID: 'UA-12345-1', ANALYTICS_API_SECRET: 'a-secret' }),
+    (error) => error instanceof ConfigError && /starts with "G-"/.test(error.message),
+  )
+})
+
+test('ANALYTICS_DEBUG sends to the endpoint that checks a payload', () => {
+  const env = { ANALYTICS_MEASUREMENT_ID: 'G-ABC123', ANALYTICS_API_SECRET: 'a-secret' }
+  assert.equal(analyticsOf({ ...env, ANALYTICS_DEBUG: 'true' })?.debug, true)
+})
