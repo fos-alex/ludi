@@ -76,6 +76,11 @@ services:
       WEATHER_URL: ${WEATHER_URL:-}
       GEOCODING_URL: ${GEOCODING_URL:-}
       WEATHER_CACHE_MINUTES: ${WEATHER_CACHE_MINUTES:-}
+      # Jev, which reads whether the kids would enjoy each juego (JUG-200).
+      # Without a key, the ranking doesn't ask it.
+      TYPESAFE_API_KEY: ${TYPESAFE_API_KEY:-}
+      JEV_MODEL: ${JEV_MODEL:-}
+      TYPESAFE_URL: ${TYPESAFE_URL:-}
       # The SMTP service email is sent through (JUG-169). Without SMTP_HOST,
       # email is off.
       SMTP_HOST: ${SMTP_HOST:-}
