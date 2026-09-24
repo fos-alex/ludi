@@ -4,7 +4,7 @@
  * This orders what is left, and it is pure, so a seeded random gives the same
  * order every time and each rule has its own unit test.
  *
- * A template's score is six factors multiplied:
+ * A template's score is seven factors multiplied:
  *
  * - **Fit.** 1, plus a bonus when it is about something a kid playing loves
  *   (its themes against the kids' interests, read through catalog/themes.js),
@@ -53,6 +53,11 @@
  *   (JUG-191): after dark the juego is at home, which is what Home's moon
  *   tells the parent. Like the moment, it only ever lowers a score, and
  *   never to zero.
+ * - **Enjoyment.** Jev's probability that the kids playing would enjoy it
+ *   (JUG-200), read from their ages and what they love (enjoyment.js). One
+ *   half leaves the score where it is; a sure yes raises it by `enjoyment`,
+ *   and a sure no lowers it by as much. No answer from Jev, which is the
+ *   case without a key, leaves every template where it is.
  *
  * Two things are out before scoring: the juego being left, and any template
  * whose last reaction from this family was a thumbs down. Each is let back
@@ -89,6 +94,8 @@ import { placeholdersIn } from '../catalog/slots.js'
  * @property {number} different what a template loses for being like the one being left, times the similarity
  * @property {Record<Mood, Record<Energy, number>>} moment what a template of each energy keeps in each moment
  * @property {Record<Weather, Record<Place, number>>} weather what a template of each place keeps in each weather
+ * @property {number} enjoyment what a template Jev is sure the kids would enjoy gains, and one it is sure
+ *   they wouldn't loses, from 0 to 1
  */
 /**
  * @typedef {object} Seen one activity the family was offered
@@ -112,6 +119,8 @@ import { placeholdersIn } from '../catalog/slots.js'
  * @property {Conditions | null} conditions what it was like outside, and what said so
  * @property {boolean} night whether it was night, which keeps the juego at home
  * @property {number} weather what the weather and the night left it
+ * @property {number | null} jev Jev's probability that the kids would enjoy it, or null without an answer
+ * @property {number} enjoyment what that left it
  * @property {Weights} weights
  */
 /** @typedef {{ template: Template, fill: Fill }} Candidate */
@@ -143,6 +152,9 @@ export const DEFAULT_WEIGHTS = {
     fair: { outdoor: 1, indoor: 1 },
     poor: { outdoor: 0.15, indoor: 1 },
   },
+  // A sure yes is worth half again, a sure no half: enough to lift a juego
+  // Jev is sure about past one it doubts, and never enough to take one away.
+  enjoyment: 0.5,
 }
 
 const DAY = 86_400_000
@@ -160,6 +172,7 @@ const DAY = 86_400_000
  *   mood?: Mood | null,
  *   conditions?: Conditions | null,
  *   night?: boolean,
+ *   enjoyment?: Map<string, number> | null,
  *   now: Date,
  *   random: () => number,
  *   weights?: Weights,
@@ -170,7 +183,8 @@ const DAY = 86_400_000
  *   not; `after` the template of the juego being left; `mood` the moment the
  *   juego is for, or null for no preference; `conditions` what it is like
  *   outside where they live, or null when there is nothing to say; `night`
- *   whether it is night, when outside is out whatever the weather.
+ *   whether it is night, when outside is out whatever the weather;
+ *   `enjoyment` Jev's probability for each template, by id, or null.
  * @returns {{ template: Template, fill: Fill, pick: Pick }[]}
  */
 export function rank(
@@ -185,6 +199,7 @@ export function rank(
     mood = null,
     conditions = null,
     night = false,
+    enjoyment = null,
     now,
     random,
     weights = DEFAULT_WEIGHTS,
@@ -239,14 +254,16 @@ export function rank(
     const moment = mood ? weights.moment[mood][template.energy] : 1
     const outside = night ? 'poor' : conditions?.weather
     const weather = outside ? weights.weather[outside][template.place] : 1
+    const jev = enjoyment?.get(template.id) ?? null
+    const enjoys = jev === null ? 1 : 1 + weights.enjoyment * (2 * jev - 1)
 
-    const score = fit * feedback * freshness * difference * moment * weather
+    const score = fit * feedback * freshness * difference * moment * weather * enjoys
     return {
       template,
       fill,
       pick: {
         score, fit, themes, named, favorite, feedback: { rating: template.rating, alpha, beta, sample },
-        freshness, difference, mood, moment, conditions, night, weather, weights,
+        freshness, difference, mood, moment, conditions, night, weather, jev, enjoyment: enjoys, weights,
       },
     }
   })
