@@ -52,6 +52,7 @@ import { kidIdsOf } from '../families/families.service.js'
 /** @typedef {import('../games/games.service.js').GamesService} GamesService */
 /** @typedef {import('../materials/materials.service.js').MaterialsService} MaterialsService */
 /** @typedef {import('../weather/weather.service.js').WeatherService} WeatherService */
+/** @typedef {import('./enjoyment.js').Enjoyment} Enjoyment */
 /**
  * @typedef {import('../weather/conditions.js').Conditions & { night: boolean }} Outside
  * What the juegos are picked for outside (JUG-191): the weather where the
@@ -91,11 +92,13 @@ const lastPlayed = sql`greatest(${activities.playedAt}, case when ${activities.r
  *   games: GamesService,
  *   materials: MaterialsService,
  *   weather: WeatherService,
+ *   enjoyment: Enjoyment,
  *   random?: () => number,
  *   now?: () => Date,
  * }} deps `random` is the only source of chance, `now` the clock the
  *   freshness is measured against; tests pin both. `weather` answers null for
  *   a family that hasn't said where they live, and whenever it can't be read.
+ *   `enjoyment` answers null without Jev, and whenever it can't be read (JUG-200).
  */
 export function createActivitiesService({
   db,
@@ -104,6 +107,7 @@ export function createActivitiesService({
   games,
   materials,
   weather,
+  enjoyment,
   random = Math.random,
   now = () => new Date(),
 }) {
@@ -113,8 +117,9 @@ export function createActivitiesService({
      * playing, whose slots the family can fill, and that needs no material the
      * family doesn't have (JUG-153); keeps the ones that match what the parent
      * chose, or come closest to it (JUG-31); ranks them by fit, feedback,
-     * freshness, difference from the juego being left, the moment, and what
-     * it is like outside (ranking.js); fills the winner's slots, and deals
+     * freshness, difference from the juego being left, the moment, what it
+     * is like outside, and whether Jev says the kids would enjoy it
+     * (ranking.js); fills the winner's slots, and deals
      * its game when it is a discovery game (JUG-177); and saves the result
      * with the kids who played and why it won.
      * @param {string} familyId
@@ -150,9 +155,6 @@ export function createActivitiesService({
         // Where the family lives, for the weather (JUG-25). Null until they say.
         families.placeOf(familyId),
       ])
-      // Cached per location on the server, and never a reason to fail a juego.
-      const conditions = await weather.conditionsAt(place)
-
       const fitting = templates.flatMap((template) => {
         if (template.materials.some((key) => missing.has(key))) return []
         const fill = fillFor(profile, template, random, { everyKid: true })
@@ -163,6 +165,12 @@ export function createActivitiesService({
       }
 
       const { chosen, closest } = matching(fitting, choices)
+      const [conditions, enjoys] = await Promise.all([
+        // Cached per location on the server, and never a reason to fail a juego.
+        weather.conditionsAt(place),
+        // Jev's read of each juego left (JUG-200), also never a reason to fail one.
+        enjoyment.of(profile, chosen.map(({ template }) => template)),
+      ])
       const afterTemplateId = history.find((row) => row.isAfter)?.templateId ?? null
       const [{ template, fill, pick }] = rank(chosen, {
         interestThemes: themesOf(profile.interests),
@@ -174,6 +182,7 @@ export function createActivitiesService({
         mood: mood === undefined ? moodAt(at) : mood,
         conditions,
         night: nightAt(at),
+        enjoyment: enjoys,
         now: at,
         random,
       })

@@ -481,3 +481,60 @@ test('a family that has not said where they live is offered a juego as before (J
     await nowhere.close()
   }
 })
+
+test('Jev reads whether the kids would enjoy each juego, with no names, and the pick keeps its answer (JUG-200)', async () => {
+  /** @type {{ state: any, questions: Record<string, any> }[]} */
+  const calls = []
+  // Sure about the juego with dinosaurs, doubtful about the other.
+  const jev = {
+    /** @param {{ state: any, questions: Record<string, any> }} call */
+    async nouls({ state, questions }) {
+      calls.push({ state, questions })
+      return new Map(
+        Object.entries(questions).map(([key, question]) => [key, question.instructions.juego.title.includes('dinos') ? 0.95 : 0.05]),
+      )
+    },
+  }
+  const enjoying = await startApi({ jev, random: seededRandom('jev'), now: () => new Date('2026-09-14T15:00:00-03:00') })
+  try {
+    const catalog = createCatalogService({ db: enjoying.db })
+    await catalog.addActivityTemplate(template({ slug: 'dinos', title: 'Los dinos de {kid}' }))
+    await catalog.addActivityTemplate(template({ slug: 'otro', title: 'Otro juego' }))
+    const { cookie } = await signUpAs(enjoying, 'jev@example.com')
+    await putFamily(enjoying, cookie, { ...EXAMPLE_PROFILE, toys: [] })
+
+    const response = await enjoying.app.inject({ method: 'POST', url: '/activities/suggestions', headers: { cookie }, payload: {} })
+    assert.equal(response.statusCode, 201)
+    const { rows } = await enjoying.pool.query('select pick from activities where id = $1', [response.json().id])
+    assert.equal(typeof rows[0].pick.jev, 'number')
+    assert.ok(rows[0].pick.enjoyment !== 1)
+
+    // One call for both juegos, with the kid's age and interests and never a name.
+    assert.equal(calls.length, 1)
+    assert.equal(Object.keys(calls[0].questions).length, 2)
+    assert.deepEqual(calls[0].state.kids, [{ age: '2 years and 2 months old', loves: ['los dinosaurios', 'los caballos'] }])
+    const sent = JSON.stringify(calls[0])
+    for (const name of ['Milán', 'Inca']) assert.ok(!sent.includes(name), name)
+    assert.ok(sent.includes('Los dinos de {kid}'))
+  } finally {
+    await enjoying.close()
+  }
+
+  // When Jev fails, the juego is offered as before.
+  const failing = await startApi({ jev: { async nouls() {
+    throw new Error('down')
+  } } })
+  try {
+    const catalog = createCatalogService({ db: failing.db })
+    await catalog.addActivityTemplate(template({ slug: 'uno', title: 'Un juego' }))
+    const { cookie } = await signUpAs(failing, 'jev-caido@example.com')
+    await putFamily(failing, cookie, { ...EXAMPLE_PROFILE, toys: [] })
+    const response = await failing.app.inject({ method: 'POST', url: '/activities/suggestions', headers: { cookie }, payload: {} })
+    assert.equal(response.statusCode, 201)
+    const { rows } = await failing.pool.query('select pick from activities where id = $1', [response.json().id])
+    assert.equal(rows[0].pick.jev, null)
+    assert.equal(rows[0].pick.enjoyment, 1)
+  } finally {
+    await failing.close()
+  }
+})

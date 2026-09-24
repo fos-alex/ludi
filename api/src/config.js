@@ -61,6 +61,13 @@ const LLM_PROVIDERS = {
  */
 
 /**
+ * @typedef {object} JevConfig
+ * @property {string} url TypeSafe's System One API, up to its /v1
+ * @property {string | null} apiKey without it the ranking doesn't ask Jev (JUG-200)
+ * @property {string} model as TypeSafe names it
+ */
+
+/**
  * @typedef {object} PlacesConfig
  * @property {string} url an Open-Meteo geocoding API, up to its /v1
  */
@@ -84,6 +91,7 @@ const LLM_PROVIDERS = {
  * @property {SttConfig} stt speech to text, for voice notes
  * @property {WeatherConfig} weather what it is like where the family lives (JUG-25)
  * @property {PlacesConfig} places putting the family's words for where they live on the map (JUG-25)
+ * @property {JevConfig} jev whether the kids would enjoy a juego, as Jev reads it (JUG-200)
  * @property {EmailConfig} email the SMTP service email is sent through (JUG-169)
  * @property {{ enabled: boolean }} admin the catalog admin, which has no login yet
  * @property {{ transcripts: boolean }} audit whether parents' own words are kept in audit_transcripts (JUG-116)
@@ -105,6 +113,13 @@ export const DEFAULT_GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1'
  * new one every fifteen, and everyone in a city shares the entry.
  */
 export const DEFAULT_WEATHER_CACHE_MINUTES = 15
+
+/**
+ * TypeSafe's API and its alias for the latest stable Jev. The alias moves with
+ * each release; JEV_MODEL pins a version such as jev-1.13.0.
+ */
+export const DEFAULT_JEV_URL = 'https://api.typesafe.ai/v1'
+export const DEFAULT_JEV_MODEL = 'jev-latest'
 
 /** Whisper small, as the self-hosted speaches server names it. */
 export const DEFAULT_STT_MODEL = 'Systran/faster-whisper-small'
@@ -152,6 +167,11 @@ export function loadConfig(env = process.env) {
       cacheMs: whole(env, 'WEATHER_CACHE_MINUTES', DEFAULT_WEATHER_CACHE_MINUTES, 1) * 60_000,
     },
     places: { url: serviceUrl(env, 'GEOCODING_URL', DEFAULT_GEOCODING_URL) },
+    jev: {
+      url: serviceUrl(env, 'TYPESAFE_URL', DEFAULT_JEV_URL),
+      apiKey: env.TYPESAFE_API_KEY?.trim() || null,
+      model: env.JEV_MODEL?.trim() || DEFAULT_JEV_MODEL,
+    },
     email: loadEmail(env),
     admin: { enabled: flag(env, 'ADMIN_ENABLED') },
     // Off unless set: the texts hold the family's names.

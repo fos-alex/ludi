@@ -348,11 +348,35 @@ test('a juego outside is still offered in the rain when it is the only one that 
   assert.ok(picked.pick.score > 0)
 })
 
+test('a juego Jev says the kids would enjoy comes up more, and one it doubts less (JUG-200)', () => {
+  const liked = candidate(template({ slug: 'liked' }))
+  const doubted = candidate(template({ slug: 'doubted' }))
+  const enjoyment = new Map([['liked', 0.9], ['doubted', 0.1]])
+  const pick = (/** @type {ReturnType<typeof rank>} */ ranked, /** @type {string} */ slug) =>
+    /** @type {any} */ (ranked.find((each) => each.template.slug === slug)).pick
+
+  const ranked = rank([liked, doubted], context({ enjoyment }))
+  assert.equal(pick(ranked, 'liked').jev, 0.9)
+  assert.ok(Math.abs(pick(ranked, 'liked').enjoyment - (1 + DEFAULT_WEIGHTS.enjoyment * 0.8)) < 1e-9)
+  assert.ok(Math.abs(pick(ranked, 'doubted').enjoyment - (1 - DEFAULT_WEIGHTS.enjoyment * 0.8)) < 1e-9)
+  assert.ok(winRate([liked, doubted], { enjoyment }, 'liked') > 0.65)
+
+  // Never to zero: a sure no still leaves the juego in the draw.
+  const [only] = rank([doubted], context({ enjoyment: new Map([['doubted', 0]]) }))
+  assert.ok(only.pick.score > 0)
+
+  // No answer from Jev, for every template or for one, leaves it where it is.
+  const unknown = rank([liked, doubted], context({ enjoyment: new Map([['liked', 0.9]]) }))
+  assert.equal(pick(unknown, 'doubted').jev, null)
+  assert.equal(pick(unknown, 'doubted').enjoyment, 1)
+  assert.ok(rank([liked, doubted], context()).every((each) => each.pick.jev === null && each.pick.enjoyment === 1))
+})
+
 test('the pick keeps every part of the score and the weights', () => {
   const [first] = rank([candidate(template({ slug: 'a' }))], context())
   assert.deepEqual(Object.keys(first.pick).sort(), [
-    'conditions', 'difference', 'favorite', 'feedback', 'fit', 'freshness', 'moment', 'mood', 'named', 'night',
-    'score', 'themes', 'weather', 'weights',
+    'conditions', 'difference', 'enjoyment', 'favorite', 'feedback', 'fit', 'freshness', 'jev', 'moment', 'mood',
+    'named', 'night', 'score', 'themes', 'weather', 'weights',
   ])
   assert.equal(
     first.pick.score,
@@ -362,7 +386,8 @@ test('the pick keeps every part of the score and the weights', () => {
       first.pick.freshness *
       first.pick.difference *
       first.pick.moment *
-      first.pick.weather,
+      first.pick.weather *
+      first.pick.enjoyment,
   )
   assert.deepEqual(first.pick.weights, DEFAULT_WEIGHTS)
 })
