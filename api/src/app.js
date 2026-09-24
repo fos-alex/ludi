@@ -6,6 +6,7 @@ import { createAccountsService } from './accounts/accounts.service.js'
 import { createActivitiesController } from './activities/activities.controller.js'
 import { activitiesRoutes } from './activities/activities.routes.js'
 import { createActivitiesService } from './activities/activities.service.js'
+import { createEnjoyment } from './activities/enjoyment.js'
 import { createAuditService } from './audit/audit.service.js'
 import { createAuth } from './auth/auth.js'
 import { authRoutes } from './auth/auth.routes.js'
@@ -26,6 +27,7 @@ import { historyRoutes } from './history/history.routes.js'
 import { createHistoryService } from './history/history.service.js'
 import { createMailer } from './email/mailer.js'
 import { AppError, UnavailableError } from './errors.js'
+import { createJev } from './jev/typesafe.js'
 import { createLlm } from './llm/client.js'
 import { createHealthController } from './health/health.controller.js'
 import { healthRoutes } from './health/health.routes.js'
@@ -66,12 +68,13 @@ import { createWeatherService } from './weather/weather.service.js'
  *   mailer?: import('./email/mailer.js').Mailer | null,
  *   forecaster?: import('./weather/open-meteo.js').Forecaster | null,
  *   geocoder?: import('./places/geocoder.js').Geocoder | null,
+ *   jev?: import('./jev/typesafe.js').Jev | null,
  * }} options `random` drives which template comes next; tests can pin it.
  * `now` picks the moment a story is written for, and when an invitation
- * expires; `llm`, `transcriber`, `mailer`, `forecaster`, and `geocoder`
- * override the wire, so tests can speak for the model and the speech-to-text
- * service, see the email sent, and pick the weather rather than reach the
- * internet. Without a key, stories come from templates; without STT_URL,
+ * expires; `llm`, `transcriber`, `mailer`, `forecaster`, `geocoder`, and
+ * `jev` override the wire, so tests can speak for the model and the
+ * speech-to-text service, see the email sent, and pick the weather and Jev's
+ * answers rather than reach the internet. Without a key, stories come from templates; without STT_URL,
  * voice notes are off; without SMTP_HOST, nobody can be invited.
  */
 export function buildApp({
@@ -85,6 +88,7 @@ export function buildApp({
   mailer,
   forecaster,
   geocoder,
+  jev,
 }) {
   const app = Fastify({ logger })
   const accounts = createAccountsService({ db })
@@ -106,7 +110,13 @@ export function buildApp({
   })
   // Discovery games (JUG-128), dealt when their juego is suggested.
   const games = createGamesService({ toys, random })
-  const activities = createActivitiesService({ db, catalog, families, games, materials, weather, random, now })
+  // Whether the kids would enjoy each juego, as Jev reads it (JUG-200). Null
+  // without TYPESAFE_API_KEY, and it never fails a juego either.
+  const enjoyment = createEnjoyment({
+    jev: jev === undefined ? createJev({ config: config.jev }) : jev,
+    logger: app.log,
+  })
+  const activities = createActivitiesService({ db, catalog, families, games, materials, weather, enjoyment, random, now })
   // One LLM for stories and for reading a family's text; null without a key.
   const llmClient = llm ?? createLlm({ config: config.llm })
   // `model` is the model's name, which the story audit records beside each call.
