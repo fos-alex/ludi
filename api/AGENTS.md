@@ -41,7 +41,7 @@ src/
   llm/                client.js, one client for every provider, claude-code.js, guardrails.js, and prompt.js
   jev/                typesafe.js, the client for TypeSafe's Jev, which the ranking asks for a probability (JUG-200)
   audit/              parents' own words, kept only while AUDIT_TRANSCRIPTS is on
-  usage/              what families do with Ludi: the six events and the Uso page's counts
+  usage/              what families do with Ludi: the six events, the Uso page's counts, and the GA stream the web reports to
   voice/              the speech-to-text client and the route that turns a recording into words
   weather/            the forecast provider, the per-location cache, and the pure rule that
                       reads a forecast into fine, fair, or poor (JUG-25)

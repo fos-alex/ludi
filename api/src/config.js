@@ -95,6 +95,13 @@ const LLM_PROVIDERS = {
  * @property {EmailConfig} email the SMTP service email is sent through (JUG-169)
  * @property {{ enabled: boolean }} admin the catalog admin, which has no login yet
  * @property {{ transcripts: boolean }} audit whether parents' own words are kept in audit_transcripts (JUG-116)
+ * @property {AnalyticsConfig | null} analytics the GA4 data stream the web app reports to (JUG-201); without it the web loads no GA
+ */
+
+/**
+ * @typedef {object} AnalyticsConfig
+ * @property {string} measurementId the GA4 web data stream's, `G-` and ten or so characters
+ * @property {boolean} debug marks every hit as a debug one, so it shows in GA's DebugView and in no report
  */
 
 /** How many episodes a story series holds before it is finished (JUG-59). */
@@ -176,7 +183,25 @@ export function loadConfig(env = process.env) {
     admin: { enabled: flag(env, 'ADMIN_ENABLED') },
     // Off unless set: the texts hold the family's names.
     audit: { transcripts: flag(env, 'AUDIT_TRANSCRIPTS') },
+    analytics: loadAnalytics(env),
   }
+}
+
+/**
+ * The GA4 data stream the web app reports to (JUG-201). The web asks the API
+ * for it at runtime, so turning GA on or off is a change of environment and
+ * not a rebuild. Without ANALYTICS_MEASUREMENT_ID the web loads no GA at all.
+ * @param {NodeJS.ProcessEnv} env
+ * @returns {AnalyticsConfig | null}
+ */
+function loadAnalytics(env) {
+  const measurementId = env.ANALYTICS_MEASUREMENT_ID?.trim()
+  const debug = flag(env, 'ANALYTICS_DEBUG')
+  if (!measurementId) return null
+  if (!/^G-[A-Z0-9]+$/.test(measurementId)) {
+    throw new ConfigError(`ANALYTICS_MEASUREMENT_ID is a GA4 web data stream's, like "G-ABC123XYZ", not "${measurementId}"`)
+  }
+  return { measurementId, debug }
 }
 
 

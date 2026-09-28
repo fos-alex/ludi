@@ -103,7 +103,12 @@ export function UsageScreen() {
             </details>
 
             <StatusLine>
-              Los días se cuentan en Buenos Aires, así que un cuento de las once de la noche queda en esa noche.
+              Los días se cuentan en Buenos Aires, así que un cuento de las once de la noche queda en esa noche. Las
+              pantallas, los dispositivos y por dónde se va la gente están en{' '}
+              <a href="https://analytics.google.com" target="_blank" rel="noreferrer">
+                Google Analytics
+              </a>
+              .
             </StatusLine>
           </>
         )}

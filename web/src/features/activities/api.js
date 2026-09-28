@@ -4,6 +4,7 @@
  */
 import { choicesNow, choose } from './model'
 import { read, write } from '../../shared/store'
+import { track } from '../../shared/analytics'
 import { ApiError, request, WordedError } from '../../shared/http'
 
 /** @typedef {import('./types').Activity} Activity */
@@ -43,6 +44,8 @@ async function ask({ after = null, reuseMaterials = false }) {
   }
   const { closest, ...activity } = answer
   write('activities', { ...read('activities'), [activity.id]: activity })
+  // Every juego the API deals is one it counts as shown, the chain's included.
+  track('juego_shown')
   return { ...activity, closest }
 }
 
@@ -133,7 +136,12 @@ export async function findActivity(id) {
  * @param {string} id
  */
 export function markPlayed(id) {
-  if (UUID.test(id)) request('POST', `/activities/${id}/plays`).catch(() => {})
+  if (UUID.test(id)) {
+    request('POST', `/activities/${id}/plays`).then(
+      () => track('juego_played'),
+      () => {},
+    )
+  }
 }
 
 /**

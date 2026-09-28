@@ -30,6 +30,24 @@ const usagePage = {
   },
 }
 
+const analytics = {
+  type: 'object',
+  required: ['measurementId', 'debug'],
+  properties: { measurementId: { type: ['string', 'null'] }, debug: { type: 'boolean' } },
+}
+
+/**
+ * The GA4 stream the web app reports to (JUG-201), or null when there is none.
+ * Public: the pages before an account exists are the ones the funnel starts
+ * on, and a measurement ID is no secret, since GA puts it in every page it
+ * runs on.
+ * @param {import('fastify').FastifyInstance} app
+ * @param {{ controller: UsageController }} options
+ */
+export async function usageRoutes(app, { controller }) {
+  app.get('/analytics', { config: { access: 'public' }, schema: { response: { 200: analytics } } }, controller.analytics)
+}
+
 /**
  * The admin's Uso page (JUG-199). The admin has no login yet, so this route
  * is public, and app.js registers it only when ADMIN_ENABLED turns the admin

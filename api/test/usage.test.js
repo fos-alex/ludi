@@ -203,3 +203,20 @@ test('what happened stays after the account that did it is deleted', async () =>
   const orphaned = (await rowsOf('juego_played')).filter((row) => row.familyId === null)
   assert.ok(orphaned.length >= 1, 'its rows stay, with no family to point at')
 })
+
+test('the web is told there is no GA stream when none is configured', async () => {
+  const response = await api.app.inject({ method: 'GET', url: '/analytics' })
+
+  assert.equal(response.statusCode, 200, 'public: the pages before an account are part of the funnel')
+  assert.deepEqual(response.json(), { measurementId: null, debug: false })
+})
+
+test('the web is told the GA stream to report to, admin or not', async () => {
+  const withGa = await startApi({ analytics: { measurementId: 'G-ABC123XYZ', debug: true } })
+  try {
+    const response = await withGa.app.inject({ method: 'GET', url: '/analytics' })
+    assert.deepEqual(response.json(), { measurementId: 'G-ABC123XYZ', debug: true })
+  } finally {
+    await withGa.close()
+  }
+})
