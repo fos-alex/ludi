@@ -101,7 +101,8 @@ const lastPlayed = sql`greatest(${activities.playedAt}, case when ${activities.r
  * }} deps `random` is the only source of chance, `now` the clock the
  *   freshness is measured against; tests pin both. `weather` answers null for
  *   a family that hasn't said where they live, and whenever it can't be read.
- *   `enjoyment` answers null without Jev, and whenever it can't be read (JUG-200).
+ *   `enjoyment` has no ratings without Jev, or whenever it can't be read, and
+ *   records each call it made (JUG-200).
  */
 export function createActivitiesService({
   db,
@@ -186,7 +187,7 @@ export function createActivitiesService({
       }
 
       const { chosen, closest } = matching(playable, choices)
-      const [conditions, enjoys] = await Promise.all([
+      const [conditions, jevRead] = await Promise.all([
         // Cached per location on the server, and never a reason to fail a juego.
         weather.conditionsAt(place),
         // Jev's read of each juego left (JUG-200), also never a reason to fail one.
@@ -203,7 +204,7 @@ export function createActivitiesService({
         mood: mood === undefined ? moodAt(at) : mood,
         conditions,
         night: nightAt(at),
-        enjoyment: enjoys,
+        enjoyment: jevRead?.byTemplate ?? null,
         now: at,
         random,
       })
@@ -230,6 +231,7 @@ export function createActivitiesService({
           ...activity,
         })
         .returning({ id: activities.id })
+      if (jevRead) await enjoyment.record({ familyId, activityId: id, read: jevRead })
       return { id, ...activity, reaction: null, closest }
     },
 

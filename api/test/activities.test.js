@@ -549,9 +549,10 @@ test('Jev reads whether the kids would enjoy each juego, with no names, and the 
     /** @param {{ state: any, questions: Record<string, any> }} call */
     async nouls({ state, questions }) {
       calls.push({ state, questions })
-      return new Map(
+      const nouls = new Map(
         Object.entries(questions).map(([key, question]) => [key, question.instructions.juego.title.includes('dinos') ? 0.95 : 0.05]),
       )
+      return { nouls, model: 'jev-1.13.0', inputTokens: 780 }
     },
   }
   const enjoying = await startApi({ jev, random: seededRandom('jev'), now: () => new Date('2026-09-14T15:00:00-03:00') })
@@ -575,6 +576,19 @@ test('Jev reads whether the kids would enjoy each juego, with no names, and the 
     const sent = JSON.stringify(calls[0])
     for (const name of ['Milán', 'Inca']) assert.ok(!sent.includes(name), name)
     assert.ok(sent.includes('Los dinos de {kid}'))
+
+    // The call is recorded against the suggestion, with a rating per juego.
+    const { rows: recorded } = await enjoying.pool.query(
+      `select c.activity_id, c.model, c.input_tokens, c.error, t.slug, r.noul
+         from jev_calls c join jev_ratings r on r.call_id = c.id join activity_templates t on t.id = r.template_id
+        order by t.slug`,
+    )
+    assert.deepEqual(
+      recorded.map(({ slug, noul }) => [slug, Math.round(noul * 100) / 100]),
+      [['dinos', 0.95], ['otro', 0.05]],
+    )
+    assert.ok(recorded.every((row) => row.activity_id === response.json().id && row.model === 'jev-1.13.0'))
+    assert.ok(recorded.every((row) => row.input_tokens === 780 && row.error === null))
   } finally {
     await enjoying.close()
   }
@@ -593,6 +607,9 @@ test('Jev reads whether the kids would enjoy each juego, with no names, and the 
     const { rows } = await failing.pool.query('select pick from activities where id = $1', [response.json().id])
     assert.equal(rows[0].pick.jev, null)
     assert.equal(rows[0].pick.enjoyment, 1)
+    // The failed call is recorded too, with why and no ratings.
+    const { rows: recorded } = await failing.pool.query('select error, (select count(*)::int from jev_ratings) as ratings from jev_calls')
+    assert.deepEqual(recorded, [{ error: 'down', ratings: 0 }])
   } finally {
     await failing.close()
   }

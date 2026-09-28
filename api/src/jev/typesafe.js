@@ -17,9 +17,14 @@ import { UpstreamError } from '../errors.js'
  * @typedef {{ instructions: string | object, criteria?: { true: string, false: string } }} Noul
  */
 /**
+ * @typedef {object} Answer
+ * @property {Map<string, number>} nouls the probability of a yes for each question, by the key it was asked under
+ * @property {string | null} model the versioned id that answered, such as jev-1.13.0
+ * @property {number | null} inputTokens what the call was charged for
+ */
+/**
  * @typedef {object} Jev
- * @property {(call: { state: object, questions: Record<string, Noul>, signal?: AbortSignal }) => Promise<Map<string, number>>} nouls
- *   the probability of a yes for each question, by the key it was asked under
+ * @property {(call: { state: object, questions: Record<string, Noul>, signal?: AbortSignal }) => Promise<Answer>} nouls
  */
 
 const USER_AGENT = 'ludi-api/0.1'
@@ -53,7 +58,7 @@ export function createJev({ config }) {
       })
       // The body of a 422 can quote the state, so only the status is kept.
       if (!response.ok) throw new UpstreamError(`Jev answered HTTP ${response.status}`)
-      const data = /** @type {{ answers?: Record<string, { noul?: unknown }> } | null} */ (
+      const data = /** @type {{ model?: unknown, answers?: Record<string, { noul?: unknown }>, usage?: { input_tokens?: unknown } } | null} */ (
         await response.json().catch(() => null)
       )
 
@@ -64,7 +69,12 @@ export function createJev({ config }) {
         if (typeof noul === 'number' && Number.isFinite(noul)) nouls.set(key, Math.min(1, Math.max(0, noul)))
       }
       if (nouls.size === 0) throw new UpstreamError('Jev answered with no nouls')
-      return nouls
+      const inputTokens = data?.usage?.input_tokens
+      return {
+        nouls,
+        model: typeof data?.model === 'string' ? data.model : null,
+        inputTokens: Number.isInteger(inputTokens) ? /** @type {number} */ (inputTokens) : null,
+      }
     },
   }
 }

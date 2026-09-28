@@ -2,7 +2,7 @@
  * The activities suggested to each family, from the catalog's templates.
  */
 import { sql } from 'drizzle-orm'
-import { check, index, jsonb, pgTable, smallint, text, uuid } from 'drizzle-orm/pg-core'
+import { check, index, integer, jsonb, pgTable, real, smallint, text, uuid } from 'drizzle-orm/pg-core'
 import { activityTemplates } from '../catalog/catalog.schema.js'
 import { createdAt, timestamptz } from '../db/columns.js'
 import { families } from '../families/families.schema.js'
@@ -55,4 +55,46 @@ export const activities = pgTable(
     index('activities_template_id_reaction_idx').on(table.templateId).where(sql`${table.reaction} is not null`),
     check('activities_reaction_check', sql`${table.reaction} in ('up', 'down')`),
   ],
+)
+
+// Every call to Jev (JUG-200), one per suggestion that asked it, kept to see
+// how Jev rates the juegos: what it was asked for, which model answered, and
+// how long it took. A failed call is kept too, with what went wrong and no
+// ratings. Nothing the family wrote goes in: the kids are the activity's
+// `kid_ids`, and what the parent thought of the juego is its `reaction`.
+export const jevCalls = pgTable(
+  'jev_calls',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    familyId: uuid()
+      .notNull()
+      .references(() => families.id, { onDelete: 'cascade' }),
+    // The suggestion Jev was asked for, which says which juego won.
+    activityId: uuid()
+      .notNull()
+      .references(() => activities.id, { onDelete: 'cascade' }),
+    // The versioned id that answered, such as jev-1.13.0, or null when none did.
+    model: text(),
+    inputTokens: integer(),
+    durationMs: integer().notNull(),
+    // Why there are no ratings: the kind of failure, never what was sent.
+    error: text(),
+    createdAt: createdAt(),
+  },
+  (table) => [index('jev_calls_created_at_idx').on(table.createdAt)],
+)
+
+// What Jev answered for each juego in a call: the probability that the kids
+// playing would enjoy it.
+export const jevRatings = pgTable(
+  'jev_ratings',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    callId: uuid()
+      .notNull()
+      .references(() => jevCalls.id, { onDelete: 'cascade' }),
+    templateId: uuid().references(() => activityTemplates.id, { onDelete: 'set null' }),
+    noul: real().notNull(),
+  },
+  (table) => [index('jev_ratings_call_id_idx').on(table.callId), index('jev_ratings_template_id_idx').on(table.templateId)],
 )

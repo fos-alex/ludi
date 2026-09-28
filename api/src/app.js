@@ -110,10 +110,12 @@ export function buildApp({
   })
   // Discovery games (JUG-128), dealt when their juego is suggested.
   const games = createGamesService({ toys, random })
-  // Whether the kids would enjoy each juego, as Jev reads it (JUG-200). Null
-  // without TYPESAFE_API_KEY, and it never fails a juego either.
+  // Whether the kids would enjoy each juego, as Jev reads it (JUG-200), with
+  // every call recorded. Off without TYPESAFE_API_KEY, and it never fails a
+  // juego either.
   const enjoyment = createEnjoyment({
     jev: jev === undefined ? createJev({ config: config.jev }) : jev,
+    db,
     logger: app.log,
   })
   const activities = createActivitiesService({ db, catalog, families, games, materials, weather, enjoyment, random, now })
