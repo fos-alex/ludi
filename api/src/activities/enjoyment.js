@@ -11,15 +11,30 @@
  * and the templates go with their slots unfilled: `{kid}`, not the kid's name.
  *
  * **It never fails a suggestion, and never holds one up for long.** Without a
- * key, past the timeout, and on any error it answers null, and the ranking
- * works as it did before.
+ * key, past the timeout, and on any error there are no ratings, and the
+ * ranking works as it did before.
+ *
+ * **Every call is recorded** in `jev_calls`, with its ratings in `jev_ratings`,
+ * tied to the suggestion it was made for, so how Jev rates each juego can be
+ * read back in SQL beside what won and what the parent thought of it.
  */
+import { performance } from 'node:perf_hooks'
+import { jevCalls, jevRatings } from './activities.schema.js'
 
 /** @typedef {import('../jev/typesafe.js').Jev} Jev */
 /** @typedef {import('../jev/typesafe.js').Noul} Noul */
 /** @typedef {import('../families/families.service.js').Profile} Profile */
 /** @typedef {import('../catalog/catalog.service.js').FillableActivityTemplate} Template */
+/** @typedef {import('../db/client.js').Db} Db */
 /** @typedef {ReturnType<typeof createEnjoyment>} Enjoyment */
+/**
+ * @typedef {object} Read what one call to Jev came back with
+ * @property {Map<string, number> | null} byTemplate the probability for each template, by id; null when the call failed
+ * @property {string | null} model the versioned id that answered
+ * @property {number | null} inputTokens
+ * @property {number} durationMs
+ * @property {string | null} error the kind of failure, never what was sent
+ */
 
 /**
  * ¡Juguemos! is one tap. Jev answers in well under a second, so past this the
@@ -40,21 +55,27 @@ const NOTE =
   'Each juego is a template for a parent to play with the kids. Words in braces, such as {kid}, {pet}, or {toy}, are filled in later with the family’s own names.'
 
 /**
- * @param {{ jev: Jev | null, logger?: { warn: (message: string) => void } }} deps
+ * @param {{
+ *   jev: Jev | null,
+ *   db?: Db | null,
+ *   logger?: { warn: (message: string) => void, error: (details: object, message: string) => void } | null,
+ * }} deps `db` is where each call is recorded; without it nothing is.
  */
-export function createEnjoyment({ jev, logger }) {
+export function createEnjoyment({ jev, db = null, logger = null }) {
   return {
     /**
-     * The probability that the kids playing would enjoy each template, by
-     * template id, or null when there is nothing to say.
+     * What Jev says about each template for the kids playing, or null when
+     * it wasn't asked: no Jev, or nothing to ask about.
      * @param {Profile} profile the playing profile: only the kids playing
      * @param {Template[]} templates
-     * @returns {Promise<Map<string, number> | null>}
+     * @returns {Promise<Read | null>}
      */
     async of(profile, templates) {
       if (!jev || templates.length === 0) return null
+      const started = performance.now()
+      const took = () => Math.round(performance.now() - started)
       try {
-        const nouls = await jev.nouls({
+        const answer = await jev.nouls({
           state: stateOf(profile),
           questions: Object.fromEntries(templates.map((template, at) => [`t${at}`, questionFor(template)])),
           signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -62,14 +83,46 @@ export function createEnjoyment({ jev, logger }) {
         /** @type {Map<string, number>} */
         const byTemplate = new Map()
         templates.forEach((template, at) => {
-          const noul = nouls.get(`t${at}`)
+          const noul = answer.nouls.get(`t${at}`)
           if (noul !== undefined) byTemplate.set(template.id, noul)
         })
-        return byTemplate
+        return { byTemplate, model: answer.model, inputTokens: answer.inputTokens, durationMs: took(), error: null }
       } catch (error) {
         // The message names the failure and never what was asked.
-        logger?.warn(`Jev could not be read: ${/** @type {Error} */ (error).message}`)
-        return null
+        const message = /** @type {Error} */ (error).message
+        logger?.warn(`Jev could not be read: ${message}`)
+        return { byTemplate: null, model: null, inputTokens: null, durationMs: took(), error: message }
+      }
+    },
+
+    /**
+     * Keeps a call and what Jev answered for each template, for reading Jev's
+     * ratings back in SQL. A juego must never fail because of it, so a
+     * failed insert is logged and let go; without a logger it throws, which
+     * is what a test wants.
+     * @param {{ familyId: string, activityId: string, read: Read }} call
+     */
+    async record({ familyId, activityId, read }) {
+      if (!db) return
+      try {
+        await db.transaction(async (tx) => {
+          const [{ id }] = await tx
+            .insert(jevCalls)
+            .values({
+              familyId,
+              activityId,
+              model: read.model,
+              inputTokens: read.inputTokens,
+              durationMs: read.durationMs,
+              error: read.error,
+            })
+            .returning({ id: jevCalls.id })
+          const ratings = [...(read.byTemplate ?? [])].map(([templateId, noul]) => ({ callId: id, templateId, noul }))
+          if (ratings.length > 0) await tx.insert(jevRatings).values(ratings)
+        })
+      } catch (error) {
+        if (!logger) throw error
+        logger.error({ err: error }, 'the Jev call was not recorded')
       }
     },
   }

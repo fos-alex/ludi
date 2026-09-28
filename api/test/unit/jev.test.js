@@ -80,8 +80,14 @@ test('without a key there is no client', () => {
 
 test('the nouls come back by the key each question was asked under, with the key and the model sent', async () => {
   answer = everyNoul(0.8)
-  const nouls = await jev().nouls({ state: { kids: [] }, questions: { a: { instructions: 'A?' }, b: { instructions: 'B?' } } })
+  const { nouls, model, inputTokens } = await jev().nouls({
+    state: { kids: [] },
+    questions: { a: { instructions: 'A?' }, b: { instructions: 'B?' } },
+  })
   assert.deepEqual([...nouls], [['a', 0.8], ['b', 0.8]])
+  // The version that answered, which the alias hides, and what the call cost.
+  assert.equal(model, 'jev-1.13.0')
+  assert.equal(inputTokens, 10)
   assert.equal(asked[0].headers.authorization, 'Bearer key')
   assert.equal(asked[0].body.model, 'jev-latest')
   assert.deepEqual(asked[0].body.questions.a, { type: 'noul', instructions: 'A?' })
@@ -119,25 +125,32 @@ test('ages are in words', () => {
 test('enjoyment is one call for every template, by template id', async () => {
   answer = everyNoul(0.7)
   const enjoyment = createEnjoyment({ jev: jev() })
-  const byTemplate = await enjoyment.of(PROFILE, [template('a'), template('b')])
-  assert.deepEqual(byTemplate && [...byTemplate], [['a', 0.7], ['b', 0.7]])
+  const read = await enjoyment.of(PROFILE, [template('a'), template('b')])
+  assert.deepEqual(read?.byTemplate && [...read.byTemplate], [['a', 0.7], ['b', 0.7]])
+  assert.equal(read?.model, 'jev-1.13.0')
+  assert.equal(read?.error, null)
   assert.equal(asked.length, 1)
 })
 
-test('enjoyment never fails a juego: no Jev, an error, and a slow answer are all null', async () => {
+test('enjoyment never fails a juego: an error and a slow answer have no ratings, and say why', async () => {
+  // Without Jev nothing is asked, and nothing is recorded.
   assert.equal(await createEnjoyment({ jev: null }).of(PROFILE, [template('a')]), null)
 
   /** @type {string[]} */
   const warnings = []
-  const logger = { warn: (/** @type {string} */ message) => warnings.push(message) }
+  const logger = { warn: (/** @type {string} */ message) => warnings.push(message), error: () => {} }
   answer = status(500)
-  assert.equal(await createEnjoyment({ jev: jev(), logger }).of(PROFILE, [template('a')]), null)
+  const failed = await createEnjoyment({ jev: jev(), logger }).of(PROFILE, [template('a')])
+  assert.equal(failed?.byTemplate, null)
+  assert.equal(failed?.error, 'Jev answered HTTP 500')
   assert.equal(warnings.length, 1)
   assert.ok(!warnings[0].includes('Milán'))
 
   // Past the timeout the juego goes without it.
   answer = (response, body) => setTimeout(() => everyNoul(0.5)(response, body), 2500)
   const started = Date.now()
-  assert.equal(await createEnjoyment({ jev: jev(), logger }).of(PROFILE, [template('a')]), null)
+  const slow = await createEnjoyment({ jev: jev(), logger }).of(PROFILE, [template('a')])
+  assert.equal(slow?.byTemplate, null)
+  assert.match(String(slow?.error), /TimeoutError/)
   assert.ok(Date.now() - started < 2400)
 })
