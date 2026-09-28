@@ -16,6 +16,7 @@ Ludi is a play coach for families in Buenos Aires. **A task's Linear issue is it
 | [docs/constitution.md](docs/constitution.md) | A change affects what Ludi says to a family, what it asks of them, or what it does with their data. It holds the commitments and guardrails every decision follows |
 | [docs/design.md](docs/design.md) | A change touches the UI: colour, type, iconography, motion, or the app icon |
 | [docs/architecture.md](docs/architecture.md) | A change adds a service or a dependency, or changes how the pieces run and connect |
+| [docs/juego-ranking.md](docs/juego-ranking.md) | A change touches which juego is offered: the filters, a factor of the score, or its weights |
 | [docs/product-concept.md](docs/product-concept.md) | You need the reason behind a feature, or you are writing a feature spec |
 | [docs/brand-brief.md](docs/brand-brief.md) | The work touches the brand: the name, the voice, or the look |
 | [docs/releases.md](docs/releases.md) | You are planning future releases or prioritizing features. A task doesn't need it |
