@@ -9,6 +9,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { routeTree } from '../routeTree.gen'
+import { startAnalytics } from '../shared/analytics'
 import { upgradeCachedFamily } from '../features/family'
 import { keepUpToDate } from './updates'
 import { applyInitialTheme } from './ThemeProvider'
@@ -16,6 +17,8 @@ import { applyInitialTheme } from './ThemeProvider'
 const router = createRouter({ routeTree, defaultPreload: 'intent' })
 
 if (import.meta.env.PROD) void keepUpToDate(router)
+// Page views from the router, and GA once the page is idle, if the API has a stream (JUG-201).
+startAnalytics(router)
 
 applyInitialTheme()
 upgradeCachedFamily()

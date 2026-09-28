@@ -46,7 +46,7 @@ import { toysRoutes } from './toys/toys.routes.js'
 import { createToysService } from './toys/toys.service.js'
 import { createToysUnderstanding } from './toys/understanding.js'
 import { createUsageController } from './usage/usage.controller.js'
-import { adminUsageRoutes } from './usage/usage.routes.js'
+import { adminUsageRoutes, usageRoutes } from './usage/usage.routes.js'
 import { createUsageService } from './usage/usage.service.js'
 import { createTranscriber } from './voice/transcriber.js'
 import { createVoiceController } from './voice/voice.controller.js'
@@ -184,6 +184,7 @@ export function buildApp({
   app.register(gamesRoutes, { controller: createGamesController({ games }) })
   app.register(storiesRoutes, { controller: createStoriesController({ stories }) })
   app.register(historyRoutes, { controller: createHistoryController({ history }) })
+  app.register(usageRoutes, { controller: createUsageController({ usage, analytics: config.analytics }) })
   // Session access, not family: onboarding records a note before the family exists.
   app.register(voiceRoutes, { controller: createVoiceController({ voice }) })
   // The admin has no login yet, so it exists only where ADMIN_ENABLED turns it on.

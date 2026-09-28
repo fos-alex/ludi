@@ -95,3 +95,22 @@ test('an unknown provider stops the API at startup', () => {
   )
 })
 
+
+/** @param {NodeJS.ProcessEnv} env */
+const analyticsOf = (env) => loadConfig({ ...REQUIRED, ...env }).analytics
+
+test('the web loads GA only when a GA4 stream is set', () => {
+  assert.equal(analyticsOf({}), null, 'off unless it is set up')
+  assert.equal(analyticsOf({ ANALYTICS_DEBUG: 'true' }), null, 'debug alone turns nothing on')
+  assert.deepEqual(analyticsOf({ ANALYTICS_MEASUREMENT_ID: ' G-ABC123XYZ ' }), { measurementId: 'G-ABC123XYZ', debug: false })
+  assert.equal(analyticsOf({ ANALYTICS_MEASUREMENT_ID: 'G-ABC123XYZ', ANALYTICS_DEBUG: 'true' })?.debug, true)
+})
+
+test('an id that is not a GA4 web stream is refused, since the web would put it in a script URL', () => {
+  for (const id of ['UA-12345-1', 'G-abc"><script>', 'GTM-ABC123']) {
+    assert.throws(
+      () => analyticsOf({ ANALYTICS_MEASUREMENT_ID: id }),
+      (error) => error instanceof ConfigError && /ANALYTICS_MEASUREMENT_ID/.test(error.message),
+    )
+  }
+})

@@ -14,6 +14,7 @@
  * any other: they stream the same way and are cached under their own ids.
  */
 import { read, write } from '../../shared/store'
+import { track } from '../../shared/analytics'
 import { ApiError, endSession, OfflineError, request, WordedError } from '../../shared/http'
 
 /** @typedef {import('./types').StoryOption} StoryOption */
@@ -347,7 +348,10 @@ export async function savedStory(id) {
  * @param {string} id the story's own id
  */
 export function markRead(id) {
-  request('POST', `/stories/${id}/reads`).catch(() => {})
+  request('POST', `/stories/${id}/reads`).then(
+    () => track('story_told'),
+    () => {},
+  )
 }
 
 /**
@@ -400,6 +404,7 @@ export async function makeSeries(storyId) {
     const started = /** @type {Series} */ (await request('POST', `/stories/${storyId}/series`))
     remember(started)
     placeInSeries((story) => story.id === storyId, { id: started.id, title: started.title, episode: 1 })
+    track('series_started')
     return started
   } catch (error) {
     throw seriesFailure(error)

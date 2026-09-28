@@ -5,6 +5,7 @@
  * the toy box's (./toys).
  */
 import { read, write } from '../../shared/store'
+import { track } from '../../shared/analytics'
 import { ApiError, request, WordedError } from '../../shared/http'
 import { DEFAULT_CALLED_AS, DEFAULT_PET_KIND } from './model'
 
@@ -165,7 +166,11 @@ export async function understandChanges(text) {
 
 /** @param {FamilyInput} family @returns {Promise<Family>} */
 export async function saveFamily(family) {
+  // With no family in this browser yet, this save is the one that starts it.
+  // GA's count is only as good as that guess; the Uso page's is the API's own.
+  const starting = !read('family')
   const saved = toFamily(await request('PUT', '/family', toProfile(family)))
+  if (starting) track('family_created')
   write('family', saved)
   write('parseResult', null)
   write('familyDraft', null)

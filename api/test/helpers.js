@@ -38,10 +38,11 @@ export const ORIGIN = 'http://localhost:3000'
  *   email?: Partial<Config['email']>,
  *   admin?: Partial<Config['admin']>,
  *   audit?: Partial<Config['audit']>,
+ *   analytics?: Config['analytics'],
  * }} [overrides]
  * @returns {Config}
  */
-export function testConfig({ auth, llm, stories, stt, weather, places, jev, email, admin, audit, ...rest } = {}) {
+export function testConfig({ auth, llm, stories, stt, weather, places, jev, email, admin, audit, analytics = null, ...rest } = {}) {
   return {
     port: 0,
     databaseUrl: '',
@@ -61,6 +62,8 @@ export function testConfig({ auth, llm, stories, stt, weather, places, jev, emai
     email: { host: null, port: DEFAULT_SMTP_PORT, user: null, password: null, from: '', ...email },
     admin: { enabled: false, ...admin },
     audit: { transcripts: false, ...audit },
+    // No GA4 stream: the web would load no GA.
+    analytics,
     ...rest,
   }
 }
@@ -108,7 +111,7 @@ export async function createDatabase() {
  * No test reaches the internet: `forecaster`, `geocoder`, and `jev` are null
  * unless the test passes its own, so the weather is whatever it says it is
  * (JUG-25), and so is Jev (JUG-200).
- * @param {{ trustedOrigins?: string[], google?: Config['auth']['google'], random?: () => number, now?: () => Date, llm?: unknown, transcriber?: unknown, mailer?: import('../src/email/mailer.js').Mailer, forecaster?: import('../src/weather/open-meteo.js').Forecaster | null, geocoder?: import('../src/places/geocoder.js').Geocoder | null, jev?: import('../src/jev/typesafe.js').Jev | null, admin?: boolean, auditTranscripts?: boolean, maxEpisodes?: number }} [options]
+ * @param {{ trustedOrigins?: string[], google?: Config['auth']['google'], random?: () => number, now?: () => Date, llm?: unknown, transcriber?: unknown, mailer?: import('../src/email/mailer.js').Mailer, forecaster?: import('../src/weather/open-meteo.js').Forecaster | null, geocoder?: import('../src/places/geocoder.js').Geocoder | null, jev?: import('../src/jev/typesafe.js').Jev | null, admin?: boolean, auditTranscripts?: boolean, maxEpisodes?: number, analytics?: Config['analytics'] }} [options]
  */
 export async function startApi({
   trustedOrigins = [],
@@ -124,6 +127,7 @@ export async function startApi({
   admin = false,
   auditTranscripts = false,
   maxEpisodes = DEFAULT_SERIES_EPISODES,
+  analytics = null,
 } = {}) {
   const database = await createDatabase()
   await migrate({ databaseUrl: database.url })
@@ -135,6 +139,7 @@ export async function startApi({
     stories: { episodesPerSeries: maxEpisodes },
     admin: { enabled: admin },
     audit: { transcripts: auditTranscripts },
+    analytics,
   })
   const app = buildApp({ config, db, logger: false, random, now, llm, transcriber, mailer, forecaster, geocoder, jev })
   await app.ready()

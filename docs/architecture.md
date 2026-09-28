@@ -40,7 +40,7 @@ Four containers on one droplet, defined in a single Docker Compose file used in 
 
 The rules that hold it together:
 
-- **The browser never talks to an LLM provider, a maps provider, or the database directly.** Everything goes through the API, so keys stay on the server and every AI call can be logged, rate-limited, and bounded by safety rules.
+- **The browser never talks to an LLM provider, a maps provider, or the database directly.** Everything goes through the API, so keys stay on the server and every AI call can be logged, rate-limited, and bounded by safety rules. Google Analytics is the one third party the browser reaches itself (JUG-201), since what it measures only exists in the browser; it holds no key, and it is told the route, never the URL.
 - **The database is not exposed to the public internet.** Only the API reaches it.
 - **The same Compose file runs locally,** so there is no drift between a developer machine and the server. Local development runs at `https://ludi.local` rather than `localhost` because microphone capture and service workers need a secure context, and because a real hostname lets a phone on the network load it. In production the same Caddyfile swaps the site address for the real domain.
 - **Caddy serves hashed assets `immutable` and everything else `no-cache`,** which is what makes every deploy refresh cleanly on clients.
@@ -119,6 +119,7 @@ The tables themselves, and what each domain owns, are in [api/AGENTS.md](../api/
 | Decision model | Whether the kids playing would enjoy each juego that fits, one factor of the ranking | TypeSafe's Jev (JUG-200), one call per suggestion that answers a yes/no probability for every candidate. It gets the kids' ages and interests and the templates with their slots unfilled, never a name. Off without `TYPESAFE_API_KEY`, and it never fails a suggestion: past 1.5 seconds or on an error the ranking goes without it. TypeSafe says it doesn’t train on requests; how long it keeps them is in its Data Processing Agreement, and zero retention is for enterprise plans. |
 | Geocoding | Turning the words a family writes for where they live into coordinates | Open-Meteo's geocoding service, asked only when those words change (JUG-25). A city or a zone, never a home: nothing asks the device where it is. |
 | Maps | Nearby plazas and kid-friendly places | Maps data is enough for v1; no curated event listings. |
+| Analytics | Sessions, devices, screens, and where people leave a flow (JUG-201) | Google Analytics 4, in the browser, off unless `ANALYTICS_MEASUREMENT_ID` is set. The web asks the API for the stream, and loads `gtag.js` only once the page is idle after load, so the first screen never waits on it. A page view names the route, `/cuento/$id`, never the URL or the title: titles name the kids and their toys, and URLs can carry an email. Five events go with it, once the API has taken them. Google signals and ads personalisation are off, and the admin is not reported. The exact counts are the API's own, in `usage_events` on the droplet (JUG-198). |
 | Email | Invitations to sign up (JUG-34); email verification when it comes | Resend's free plan over SMTP, 3,000 emails a month and 100 a day. Any SMTP service is a change of environment variables (JUG-169). DigitalOcean blocks SMTP's usual ports on droplets, so it uses 2465. Only the address and the message leave the server. |
 
 Each sits behind a thin internal interface, so a provider can be swapped without touching product code.
@@ -134,7 +135,7 @@ What that means in practice:
 - Backups are encrypted and stored off the droplet.
 - Argentina's Ley 25.326, overseen by the AAIP, is the first legal framework to satisfy. Each new market adds its own.
 - What parents send in their own words is kept only for auditing the playtest (JUG-116), only while `AUDIT_TRANSCRIPTS` is on, which is never in production. Deleting an account or family deletes those rows. The texts never go into logs.
-- Usage is counted as events, not as people (JUG-198). A row says that a juego was played, not who played it or what it was; `usage_events` holds the family and account ids so the counts can be grouped, and deleting an account leaves the rows behind with both set to null. It stays on the droplet.
+- Usage is counted as events, not as people (JUG-198). A row says that a juego was played, not who played it or what it was; `usage_events` holds the family and account ids so the counts can be grouped, and deleting an account leaves the rows behind with both set to null. It stays on the droplet. What Google Analytics gets from the browser is smaller: routes and event names, with no id of ours. Before anyone outside the family uses Ludi, GA needs a consent decision, since it sets cookies (JUG-201).
 
 ## Operations
 
