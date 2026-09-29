@@ -77,6 +77,10 @@
  * game share one freshness (JUG-128), so ten sets come up about as often as
  * three did.
  *
+ * Batch 14 (JUG-203) is one more set, emociones: a kid's voice, and the kids
+ * guess how that kid feels. It is from 3, since naming a feeling from a voice
+ * alone is too hard at 2, and medium, because the answer is a face to make.
+ *
  * `rating`, from 1 to 5, is where every family's ranking starts before their
  * reactions move it (JUG-192, JUG-195). It is higher for original juegos kids
  * get into, and for the sound games. It is lower for dull or generic ones,
@@ -3023,5 +3027,31 @@ export const activityTemplates = [
     ],
     easier: 'Antes de ver la respuesta, cuenten dónde se escucha: en la playa, en el campo, en la plaza.',
     harder: 'Que {kid} adivine antes de que leas las opciones, y que diga si se escucha de día o de noche.',
+  },
+  {
+    slug: 'que-suena-emociones',
+    title: '¿Qué suena? Emociones',
+    rating: 5,
+    minutes: 10,
+    place: 'indoor',
+    minAgeMonths: 36,
+    maxAgeMonths: 71,
+    energy: 'medium',
+    categories: ['explore', 'learn', 'low_energy'],
+    smallSpace: true,
+    materials: [],
+    themes: [],
+    skills: ['escuchar', 'lenguaje', 'nombrar emociones'],
+    safety: [],
+    game: { type: 'sounds', set: 'emociones' },
+    why: 'Una risa, un llanto, un berrinche: {kid} ya sabe cómo suenan. Ponerle nombre a lo que siente otro chico ayuda a {kid} a nombrar lo que siente cuando le pasa.',
+    needs: 'nada más que el teléfono con volumen: las respuestas se hacen con la cara y la voz.',
+    steps: [
+      'Tocá Empezar y después Escuchar: el teléfono hace el sonido de un chico.',
+      'Leé las opciones en voz alta. Que adivinen cómo se siente, diciéndolo o poniendo esa cara.',
+      'Tocá Ver la respuesta y el teléfono la dice. Son cinco sonidos, y el juego termina solo.',
+    ],
+    easier: 'Antes de ver la respuesta, pongan juntos la cara de esa emoción frente a frente.',
+    harder: 'Que {kid} adivine antes de que leas las opciones, y que cuente qué le pudo haber pasado a ese chico.',
   },
 ]
