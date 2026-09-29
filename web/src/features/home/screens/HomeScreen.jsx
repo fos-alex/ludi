@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { AppMenu } from '../../../app/AppMenu'
 import { ChoiceChip, ChoiceSheet, placeText, ReactionRow, SameMaterials, suggestActivity, WeatherNote } from '../../activities'
 import { choosePlaying, familyLine, loadFamily, markPlaying, WhoPlays } from '../../family'
+import { InstallSheet } from '../../install'
 import { forgetOptions, LastStoryCard, storyOptions } from '../../stories'
 import { useDocumentTitle } from '../../../shared/hooks/useDocumentTitle'
 import { useOfflineNotice } from '../../../shared/hooks/useOfflineNotice'
@@ -45,7 +46,8 @@ const SLOW_AFTER_MS = 6000
  * the button, *¿Algo en especial?* opens the sheet where the parent chooses
  * what the juego should be (JUG-31); before bed it says the next juego will
  * be tranqui (JUG-26). In the top corner, the weather the juego is picked
- * for, with its line on a tap (JUG-191).
+ * for, with its line on a tap (JUG-191). A new account's first Home offers
+ * to add Ludi to the home screen (JUG-202).
  */
 export function HomeScreen() {
   const navigate = useNavigate()
@@ -209,6 +211,7 @@ export function HomeScreen() {
           if (!request.busy) suggest()
         }}
       />
+      <InstallSheet />
       <AppMenu open={menuOpen} onClose={() => setMenuOpen(false)} onStories={() => void openStories()} />
     </Screen>
   )

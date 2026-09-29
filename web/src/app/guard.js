@@ -1,5 +1,6 @@
 import { redirect } from '@tanstack/react-router'
 import { ensureSession } from '../features/account'
+import { offerInstall } from '../features/install'
 import { read } from '../shared/store'
 
 /** @typedef {import('../features/account').Account} Account */
@@ -17,6 +18,9 @@ export async function guard({ location }) {
   // The catalog admin has no login yet, and needs no family.
   if (path === '/admin' || path.startsWith('/admin/')) return
   const account = await ensureSession()
+  // Every new account is sent to /bienvenida, an invited one too, even though
+  // with a family it goes straight on Home: its first Home offers the install (JUG-202).
+  if (path === '/bienvenida' && account) offerInstall()
   const target = firstRunTarget(path, account, {
     hasFamily: Boolean(read('family')),
     sessionEnded: Boolean(read('sessionEnded')),
