@@ -11,7 +11,7 @@ import { useSyncExternalStore } from 'react'
  * Two writes cross over: `request` in http.js clears everything and sets
  * `sessionEnded` when the API ends the session, and the toy box keeps the
  * family's toys in step with its own.
- * @typedef {AccountKey | FamilyKey | VoiceKey | ToysKey | MaterialsKey | ActivitiesKey | StoriesKey | HistoryKey | AppKey} Key
+ * @typedef {AccountKey | FamilyKey | VoiceKey | ToysKey | MaterialsKey | ActivitiesKey | StoriesKey | HistoryKey | InstallKey | AppKey} Key
  */
 /** @typedef {'account' | 'sessionEnded'} AccountKey */
 /** @typedef {'family' | 'familyDraft' | 'parseResult'} FamilyKey */
@@ -31,6 +31,7 @@ import { useSyncExternalStore } from 'react'
  * `storyRequest` is the story the parent asked for and said yes to, until it is written (JUG-156).
  */
 /** @typedef {'history'} HistoryKey The juegos played and the stories read, as the API last sent them (JUG-188). */
+/** @typedef {'installOffer'} InstallKey Whether this device's next Home offers to add Ludi to the home screen (JUG-202). */
 /** @typedef {'theme'} AppKey The night-mode choice, written by app/ThemeProvider.jsx. */
 
 const PREFIX = 'ludi:'
