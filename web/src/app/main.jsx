@@ -11,6 +11,7 @@ import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { routeTree } from '../routeTree.gen'
 import { startAnalytics } from '../shared/analytics'
 import { upgradeCachedFamily } from '../features/family'
+import { listenForInstall } from '../features/install'
 import { keepUpToDate } from './updates'
 import { applyInitialTheme } from './ThemeProvider'
 
@@ -20,6 +21,8 @@ if (import.meta.env.PROD) void keepUpToDate(router)
 // Page views from the router, and GA once the page is idle, if the API has a stream (JUG-201).
 startAnalytics(router)
 
+// The browser's install prompt can come at any time; Home offers it later (JUG-202).
+listenForInstall()
 applyInitialTheme()
 upgradeCachedFamily()
 
