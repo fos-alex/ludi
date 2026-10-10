@@ -1,4 +1,4 @@
-import { errorBody, text, uuid as id } from '../http/schemas.js'
+import { errorBody, LONG_TEXT, text, uuid as id } from '../http/schemas.js'
 import { HOMES, PET_KINDS } from './kinds.js'
 
 /** @typedef {ReturnType<typeof import('./families.controller.js').createFamiliesController>} FamiliesController */
@@ -138,7 +138,7 @@ const understandingInput = {
   type: 'object',
   additionalProperties: false,
   required: ['text'],
-  properties: { text: { type: 'string', minLength: 1, maxLength: 4000 } },
+  properties: { text: text(LONG_TEXT) },
 }
 
 // A profile for the parent to confirm, not saved, and the fields to check.

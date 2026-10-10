@@ -15,9 +15,9 @@ import { CheckIcon, Chips, FieldGroup, Label } from '../../../shared/ui'
  * offered it (JUG-153), and a kid who loves one of its themes is offered it
  * more (JUG-104). The safety rules are part of the reviewed core, which
  * adapting never changes.
- * @param {{ form: FormState, update: (change: Partial<FormState>) => void }} props
+ * @param {{ form: FormState, errors: import('../model').Errors, update: (change: Partial<FormState>) => void }} props
  */
-export function TagsSection({ form, update }) {
+export function TagsSection({ form, errors, update }) {
   const [categories, setCategories] = useState(/** @type {MaterialCategory[] | null} */ (null))
   const [themes, setThemes] = useState(/** @type {Theme[] | null} */ (null))
   const [failure, setFailure] = useState(/** @type {string | null} */ (null))
@@ -60,10 +60,15 @@ export function TagsSection({ form, update }) {
           <Chips>{themes.map((theme) => chip('themes', theme))}</Chips>
         </FieldGroup>
       )}
-      <TextArea label="Habilidades" help="Una por línea." value={form.skills} onChange={(skills) => update({ skills })} />
+      <TextArea
+        label="Habilidades"
+        help="Una por línea."
+        error={errors.skills}
+        value={form.skills} onChange={(skills) => update({ skills })} />
       <TextArea
         label="Seguridad"
         help="Una regla por línea. Son parte del núcleo revisado: la adaptación nunca las cambia."
+        error={errors.safety}
         value={form.safety}
         onChange={(safety) => update({ safety })}
       />

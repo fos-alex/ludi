@@ -62,6 +62,7 @@ export function InvitedSignUp({ token, email, error }) {
             value={name}
             error={errors.name}
             autoComplete="given-name"
+            maxLength={80}
             autoCapitalize="words"
             onChange={(event) => {
               setName(event.target.value)

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { VoiceLine, VoiceNote } from '../../voice'
 import { addToDraft, keepDraft, understandFamily } from '../api'
+import { LONG_TEXT } from '../model'
 import { useDocumentTitle } from '../../../shared/hooks/useDocumentTitle'
 import { useRequest } from '../../../shared/hooks/useRequest'
 import { SLOW_AFTER_MS } from '../../../shared/hooks/useSlowWait'
@@ -17,7 +18,9 @@ const UNDO_MS = 6000
 
 /**
  * 2d. The prompt is the headline. The box grows to fill the screen, with the
- * brief's example as hint text; no counter, no validation.
+ * brief's example as hint text; no counter, no validation. The box takes up to
+ * LONG_TEXT characters, so a long paste is cut there instead of failing to
+ * send, and a line says so once the box is full.
  *
  * The mic records a voice note (2e, JUG-95). Its words join the box, where
  * the parent checks them like anything typed, and "Listo" sends them on the
@@ -58,7 +61,7 @@ export function TellScreen() {
 
   const understand = () => {
     if (request.busy) return
-    const text = draft.trim()
+    const text = draft.trim().slice(0, LONG_TEXT)
     if (!text) return toForm()
     void request.run(async () => {
       await understandFamily(text)
@@ -93,9 +96,12 @@ export function TellScreen() {
           className="tell__text"
           value={draft}
           placeholder={EXAMPLE}
+          maxLength={LONG_TEXT}
           readOnly={request.busy || recording}
           onChange={(event) => keepDraft(event.target.value)}
         />
+        {/* Voice pass pending. */}
+        {draft.length >= LONG_TEXT && <StatusLine role="status">Llegaste al máximo: lo que sigue ya no entra.</StatusLine>}
         <StatusLine role="alert">{request.failure}</StatusLine>
         {/* Voice pass pending. */}
         {request.state === 'slow' && <StatusLine role="status">Sigo leyendo lo que escribiste. Ya casi está.</StatusLine>}

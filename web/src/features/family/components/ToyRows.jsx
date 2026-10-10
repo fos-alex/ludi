@@ -17,6 +17,7 @@ export function ToyRows({ toys, onChange }) {
             aria-label={`Juguete ${index + 1}`}
             data-field={index === 0 ? 'toys' : undefined}
             {...AS_TYPED}
+            maxLength={120}
             value={toy.name}
             onChange={(event) => {
               const name = event.target.value

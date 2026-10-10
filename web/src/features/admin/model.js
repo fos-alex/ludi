@@ -233,6 +233,11 @@ export function check(form, isNew) {
 
   if (form.categories.length === 0) errors.categories = 'Elegí al menos una.'
   if (lines(form.steps).length > 10) errors.steps = 'Como mucho diez pasos.'
+  if (lines(form.skills).length > 20) errors.skills = 'Como mucho veinte.'
+  if (lines(form.safety).length > 20) errors.safety = 'Como mucho veinte.'
+  for (const name of /** @type {const} */ (['steps', 'skills', 'safety'])) {
+    if (lines(form[name]).some((line) => line.length > 300)) errors[name] = 'Cada línea, como mucho 300 caracteres.'
+  }
 
   for (const name of TEXTS) {
     const value = /** @type {string} */ (form[name])

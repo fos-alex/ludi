@@ -31,6 +31,7 @@ export function LocationField({ location, saved, onChange }) {
       data-field="location"
       autoCapitalize="words"
       autoComplete="address-level2"
+      maxLength={120}
       value={location ?? ''}
       onChange={(event) => onChange(event.target.value)}
     />

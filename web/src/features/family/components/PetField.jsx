@@ -34,6 +34,7 @@ export function PetField({ name, kind, onName, onKind }) {
           data-field="pet"
           autoCapitalize="words"
           autoCorrect="off"
+          maxLength={80}
           value={name}
           onChange={(event) => onName(event.target.value)}
         />

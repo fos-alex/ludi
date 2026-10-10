@@ -42,6 +42,7 @@ export function KidCard({ kid, index, draft, onDraft, onChange, onRemove }) {
           data-field={`kids.${index}`}
           autoCapitalize="words"
           autoCorrect="off"
+          maxLength={80}
           value={kid.name}
           onChange={(event) => edit({ name: event.target.value })}
         />

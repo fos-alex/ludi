@@ -25,6 +25,7 @@ export function InterestChips({ name, field, interests, draft, onDraft, onCommit
           onChange={onDraft}
           onCommit={onCommit}
           field={field}
+          maxLength={80}
           addLabel={name ? `Agregar algo que le encanta a ${name}` : 'Agregar algo que le encanta'}
           inputLabel={name ? `Algo que le encanta a ${name}` : 'Algo que le encanta'}
         />

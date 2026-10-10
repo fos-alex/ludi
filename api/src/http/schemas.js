@@ -10,6 +10,13 @@ export const uuid = { type: 'string', format: 'uuid' }
 /** A line of text someone typed, never empty. @param {number} maxLength */
 export const text = (maxLength) => ({ type: 'string', minLength: 1, maxLength })
 
+/**
+ * The most a parent's own words can run to, typed or spoken: five minutes of
+ * talking is about 6000 characters, so this leaves room for both. The web caps
+ * its text boxes at the same number (`LONG_TEXT` in web/src/features/family/model.js).
+ */
+export const LONG_TEXT = 10_000
+
 /** A list of lines, such as a template's steps. @param {number} maxItems @param {number} [minItems] */
 export const lines = (maxItems, minItems = 0) => ({ type: 'array', minItems, maxItems, items: text(300) })
 

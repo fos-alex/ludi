@@ -2,9 +2,17 @@ import { useId } from 'react'
 
 /**
  * A labelled text box, worded like Field: errors under it replace the help.
- * @param {{ label: string, help?: string, error?: string, rows?: number, value: string, onChange: (value: string) => void }} props
+ * @param {{
+ *   label: string,
+ *   help?: string,
+ *   error?: string,
+ *   rows?: number,
+ *   maxLength?: number,
+ *   value: string,
+ *   onChange: (value: string) => void,
+ * }} props
  */
-export function TextArea({ label, help, error, rows = 3, value, onChange }) {
+export function TextArea({ label, help, error, rows = 3, maxLength, value, onChange }) {
   const id = useId()
   const note = error || help
   return (
@@ -17,6 +25,7 @@ export function TextArea({ label, help, error, rows = 3, value, onChange }) {
           id={id}
           className="field__input"
           rows={rows}
+          maxLength={maxLength}
           value={value}
           aria-invalid={error ? true : undefined}
           aria-describedby={note ? `${id}-note` : undefined}

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { after, before, test } from 'node:test'
 import { buildApp } from '../src/app.js'
+import { LONG_TEXT } from '../src/http/schemas.js'
 import { signUpAs, startApi } from './helpers.js'
 
 // The design brief's example paragraph.
@@ -68,6 +69,13 @@ test('the endpoint needs a session and some text', async () => {
   assert.equal((await understand(undefined, { text: TEXT })).statusCode, 401)
   const { cookie } = await signUpAs(api, 'beto@example.com')
   assert.equal((await understand(cookie, { text: '' })).statusCode, 400)
+})
+
+test('the text can run to five minutes of talking, and no further', async () => {
+  const { cookie } = await signUpAs(api, 'eva@example.com')
+  const long = TEXT.repeat(Math.ceil(LONG_TEXT / TEXT.length)).slice(0, LONG_TEXT)
+  assert.equal((await understand(cookie, { text: long })).statusCode, 200)
+  assert.equal((await understand(cookie, { text: `${long}.` })).statusCode, 400)
 })
 
 test('an answer with no family is a failure that keeps the text out of the reply', async () => {

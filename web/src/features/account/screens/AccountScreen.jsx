@@ -78,6 +78,7 @@ export function AccountScreen() {
               value={name}
               error={errors.name}
               autoComplete="given-name"
+              maxLength={80}
               autoCapitalize="words"
               onChange={(event) => {
                 setName(event.target.value)
@@ -92,6 +93,7 @@ export function AccountScreen() {
             inputMode="email"
             // "username", not "email": it's what password managers look for, even when the account is an email.
             autoComplete="username"
+            maxLength={254}
             autoCapitalize="none"
             spellCheck={false}
             autoFocus={campo === 'email'}

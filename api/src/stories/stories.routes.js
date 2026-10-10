@@ -1,4 +1,4 @@
-import { errorBody, text, uuid } from '../http/schemas.js'
+import { errorBody, LONG_TEXT, text, uuid } from '../http/schemas.js'
 import { REQUEST_LIMITS } from './requests.js'
 
 /** @typedef {ReturnType<typeof import('./stories.controller.js').createStoriesController>} StoriesController */
@@ -128,7 +128,7 @@ const understandingInput = {
   type: 'object',
   additionalProperties: false,
   required: ['text'],
-  properties: { text: text(4000) },
+  properties: { text: text(LONG_TEXT) },
 }
 
 // A story to read: one the family was offered, by its id, an interest they

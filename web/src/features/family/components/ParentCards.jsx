@@ -27,6 +27,7 @@ export function ParentCards({ parents, onChange }) {
                 data-field={`parents.${index}`}
                 autoCapitalize="words"
                 autoCorrect="off"
+                maxLength={80}
                 value={parent.name}
                 onChange={(event) => edit(index, { name: event.target.value })}
               />
@@ -34,6 +35,7 @@ export function ParentCards({ parents, onChange }) {
                 label="Le decimos"
                 {...AS_TYPED}
                 autoCapitalize="words"
+                maxLength={40}
                 value={parent.calledAs}
                 onChange={(event) => edit(index, { calledAs: event.target.value })}
               />

@@ -89,6 +89,7 @@ export function UsersScreen() {
             type="email"
             inputMode="email"
             autoComplete="off"
+            maxLength={254}
             autoCapitalize="none"
             spellCheck={false}
             value={email}

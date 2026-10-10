@@ -35,6 +35,13 @@ export const DEFAULT_PET_KIND = /** @type {PetKind} */ ('perro')
 export const DEFAULT_CALLED_AS = 'Mamá'
 
 /**
+ * The most the parent's words on 2d can run to: room for five minutes of
+ * talking and some typing. It must match `LONG_TEXT` in api/src/http/schemas.js,
+ * or a long text fails to send.
+ */
+export const LONG_TEXT = 10_000
+
+/**
  * The animals a pet can be, in the order the form offers them, each with the
  * emoji the picker shows beside its word. The emoji is the one place the app
  * steps outside its own icon set: the animals read at a glance and the set

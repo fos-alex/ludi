@@ -108,7 +108,7 @@ export function TemplateScreen() {
             <RatingSection form={form} reactions={reactions} update={update} />
             <AudienceSection form={form} errors={errors} update={update} />
             <TextsSection form={form} errors={errors} update={update} />
-            <TagsSection form={form} update={update} />
+            <TagsSection form={form} errors={errors} update={update} />
             {!isNew && (
               <TertiaryButton size="inline" onClick={remove}>
                 Borrar juego

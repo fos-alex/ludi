@@ -1,4 +1,4 @@
-import { errorBody, text, uuid as id } from '../http/schemas.js'
+import { errorBody, LONG_TEXT, text, uuid as id } from '../http/schemas.js'
 import { MAX_TOYS } from './toys.service.js'
 
 /** @typedef {ReturnType<typeof import('./toys.controller.js').createToysController>} ToysController */
@@ -59,7 +59,7 @@ const toysUnderstandingInput = {
   type: 'object',
   additionalProperties: false,
   required: ['text'],
-  properties: { text: { type: 'string', minLength: 1, maxLength: 4000 } },
+  properties: { text: text(LONG_TEXT) },
 }
 
 const toysUnderstanding = {

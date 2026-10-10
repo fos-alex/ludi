@@ -7,7 +7,7 @@
 import { read, write } from '../../shared/store'
 import { track } from '../../shared/analytics'
 import { ApiError, request, WordedError } from '../../shared/http'
-import { DEFAULT_CALLED_AS, DEFAULT_PET_KIND } from './model'
+import { DEFAULT_CALLED_AS, DEFAULT_PET_KIND, LONG_TEXT } from './model'
 
 /** @typedef {import('./types').Family} Family */
 /** @typedef {import('./types').FamilyInput} FamilyInput */
@@ -194,10 +194,14 @@ export function keepDraft(text) {
   write('familyDraft', text)
 }
 
-/** A voice note's words go after whatever is already in the draft. @param {string} text */
+/**
+ * A voice note's words go after whatever is already in the draft, as far as
+ * the draft has room for.
+ * @param {string} text
+ */
 export function addToDraft(text) {
   const current = read('familyDraft')?.trim()
-  write('familyDraft', current ? `${current} ${text}` : text)
+  write('familyDraft', (current ? `${current} ${text}` : text).slice(0, LONG_TEXT))
 }
 
 /**
