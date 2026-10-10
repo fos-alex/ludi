@@ -1,6 +1,6 @@
 /**
- * The sound sets of ¿Qué suena? (JUG-177, and JUG-178 to JUG-185 for the
- * sets), a list in code like the materials and the themes. A set is played
+ * The sound sets of ¿Qué suena? (JUG-177, and JUG-178 to JUG-185 and JUG-203
+ * for the sets), a list in code like the materials and the themes. A set is played
  * as a juego: its catalog template names it in `game`, and each game deals
  * five of its sounds.
  *
@@ -11,6 +11,9 @@
  * toy's words are matched against, read like the themes' (catalog/themes.js).
  * `pet` is the pet kind (families/kinds.js) whose name the item takes when
  * the family has one.
+ *
+ * The emotions are guessed from a kid's voice with no words, and their names
+ * say who feels it (`alguien triste`), so they read after *¿Es…*.
  *
  * Never change a set's or an item's key once templates carry it.
  */
@@ -202,6 +205,20 @@ export const SOUND_SETS = [
       { key: 'abejas', name: 'las abejas', group: 'bichos', stems: ['abeja', 'abejit', 'abejorr'] },
       { key: 'fuego', name: 'el fuego', group: 'crujen', stems: [] },
       { key: 'hojas', name: 'las hojas secas', group: 'crujen', stems: [] },
+    ],
+  },
+  {
+    key: 'emociones',
+    name: 'Emociones',
+    items: [
+      { key: 'contento', name: 'alguien contento', group: 'alegres', stems: [] },
+      { key: 'festejo', name: 'alguien festejando', group: 'alegres', stems: [] },
+      { key: 'triste', name: 'alguien triste', group: 'llanto', stems: [] },
+      { key: 'enojado', name: 'alguien enojado', group: 'llanto', stems: [] },
+      { key: 'asustado', name: 'alguien con miedo', group: 'susto', stems: [] },
+      { key: 'sorprendido', name: 'alguien sorprendido', group: 'susto', stems: [] },
+      { key: 'aburrido', name: 'alguien aburrido', group: 'bajito', stems: [] },
+      { key: 'asco', name: 'alguien con asco', group: 'asco', stems: [] },
     ],
   },
 ]
