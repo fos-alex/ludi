@@ -44,12 +44,12 @@ export function InstallSheet() {
     <Sheet
       open={way !== null}
       onClose={close}
-      title="Tené a Ludi a mano"
+      title="Ludi, mejor como app"
       footer={
         way === 'prompt' ? (
           <>
             <PrimaryButton size="md" onClick={() => void install()}>
-              Agregar a inicio
+              Descargar
             </PrimaryButton>
             <TertiaryButton onClick={close}>Ahora no</TertiaryButton>
           </>
@@ -62,7 +62,7 @@ export function InstallSheet() {
     >
       {/* Voice pass pending: the title, the line, the steps, and the buttons. */}
       <div className="install-sheet">
-        <p className="install-sheet__line">Sumá Ludi a la pantalla de inicio y abrí la app de un toque, sin pasar por el navegador.</p>
+        <p className="install-sheet__line">Ludi se disfruta más como app en tu celular. Descargala ahora.</p>
         {way === 'iphone' && (
           <>
             <StepList steps={['Tocá Compartir, el cuadrado con la flecha.', 'Elegí Agregar a inicio.']} />
